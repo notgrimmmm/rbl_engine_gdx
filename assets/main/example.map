@@ -1,0 +1,193 @@
+// Game: RebelEdit
+// Format: Quake3
+// entity 0
+{
+"classname" "worldspawn"
+"_tb_mod" "baseq3"
+// brush 0
+{
+( -288 -64 -16 ) ( -288 -63 -16 ) ( -288 -64 -15 ) common/prototype 0 0 0 1 1
+( -64 -304 -16 ) ( -64 -304 -15 ) ( -63 -304 -16 ) common/prototype 0 0 0 1 1
+( -64 -64 -16 ) ( -63 -64 -16 ) ( -64 -63 -16 ) common/prototype 0 0 0 1 1
+( 64 64 16 ) ( 64 65 16 ) ( 65 64 16 ) common/prototype 0 0 0 1 1
+( 64 272 16 ) ( 65 272 16 ) ( 64 272 17 ) common/prototype 0 0 0 1 1
+( 256 64 16 ) ( 256 64 17 ) ( 256 65 16 ) common/prototype 0 0 0 1 1
+}
+// brush 1
+{
+( 80 -32 16 ) ( 80 -31 16 ) ( 80 -32 17 ) common/prototype 0 0 0 1 1
+( 80 -112 16 ) ( 80 -112 17 ) ( 81 -112 16 ) common/prototype 0 0 0 1 1
+( 80 -32 16 ) ( 81 -32 16 ) ( 80 -31 16 ) common/prototype 0 0 0 1 1
+( 96 64 80 ) ( 96 65 80 ) ( 97 64 80 ) common/prototype 0 0 0 1 1
+( 96 64 32 ) ( 97 64 32 ) ( 96 64 33 ) common/prototype 0 0 0 1 1
+( 96 64 32 ) ( 96 64 33 ) ( 96 65 32 ) common/prototype 0 0 0 1 1
+}
+// brush 2
+{
+( -64 192 16 ) ( -64 193 16 ) ( -64 192 17 ) common/prototype 0 0 0 1 1
+( -64 192 16 ) ( -64 192 17 ) ( -63 192 16 ) common/prototype 0 0 0 1 1
+( -64 192 16 ) ( -63 192 16 ) ( -64 193 16 ) common/prototype 0 0 0 1 1
+( 48 208 112 ) ( 48 209 112 ) ( 49 208 112 ) common/prototype 0 0 0 1 1
+( 48 256 32 ) ( 49 256 32 ) ( 48 256 33 ) common/prototype 0 0 0 1 1
+( 48 208 32 ) ( 48 208 33 ) ( 48 209 32 ) common/prototype 0 0 0 1 1
+}
+// brush 3
+{
+( -288 256 16 ) ( -288 257 16 ) ( -288 256 17 ) common/prototype 0 0 0 1 1
+( -288 256 16 ) ( -288 256 17 ) ( -287 256 16 ) common/prototype 0 0 0 1 1
+( -288 256 16 ) ( -287 256 16 ) ( -288 257 16 ) common/prototype 0 0 0 1 1
+( 224 272 160 ) ( 224 273 160 ) ( 225 272 160 ) common/prototype 0 0 0 1 1
+( 224 272 32 ) ( 225 272 32 ) ( 224 272 33 ) common/prototype 0 0 0 1 1
+( 256 272 32 ) ( 256 272 33 ) ( 256 273 32 ) common/prototype 0 0 0 1 1
+}
+// brush 4
+{
+( 240 -304 16 ) ( 240 -303 16 ) ( 240 -304 17 ) common/prototype 0 0 0 1 1
+( 240 -304 16 ) ( 240 -304 17 ) ( 241 -304 16 ) common/prototype 0 0 0 1 1
+( 240 -304 16 ) ( 241 -304 16 ) ( 240 -303 16 ) common/prototype 0 0 0 1 1
+( 256 256 160 ) ( 256 257 160 ) ( 257 256 160 ) common/prototype 0 0 0 1 1
+( 256 256 32 ) ( 257 256 32 ) ( 256 256 33 ) common/prototype 0 0 0 1 1
+( 256 256 32 ) ( 256 256 33 ) ( 256 257 32 ) common/prototype 0 0 0 1 1
+}
+// brush 5
+{
+( -288 -304 16 ) ( -288 -303 16 ) ( -288 -304 17 ) common/prototype 0 0 0 1 1
+( -288 -304 16 ) ( -288 -304 17 ) ( -287 -304 16 ) common/prototype 0 0 0 1 1
+( -288 -304 16 ) ( -287 -304 16 ) ( -288 -303 16 ) common/prototype 0 0 0 1 1
+( 240 -288 160 ) ( 240 -287 160 ) ( 241 -288 160 ) common/prototype 0 0 0 1 1
+( 240 -288 32 ) ( 241 -288 32 ) ( 240 -288 33 ) common/prototype 0 0 0 1 1
+( 240 -288 32 ) ( 240 -288 33 ) ( 240 -287 32 ) common/prototype 0 0 0 1 1
+}
+// brush 6
+{
+( -288 -288 16 ) ( -288 -287 16 ) ( -288 -288 17 ) common/prototype 0 0 0 1 1
+( -288 -288 16 ) ( -288 -288 17 ) ( -287 -288 16 ) common/prototype 0 0 0 1 1
+( -288 -288 16 ) ( -287 -288 16 ) ( -288 -287 16 ) common/prototype 0 0 0 1 1
+( -272 256 160 ) ( -272 257 160 ) ( -271 256 160 ) common/prototype 0 0 0 1 1
+( -272 256 32 ) ( -271 256 32 ) ( -272 256 33 ) common/prototype 0 0 0 1 1
+( -272 256 32 ) ( -272 256 33 ) ( -272 257 32 ) common/prototype 0 0 0 1 1
+}
+// brush 7
+{
+( -288 -64 160 ) ( -288 -63 160 ) ( -288 -64 161 ) common/prototype 0 16 0 1 1
+( -64 -304 160 ) ( -64 -304 161 ) ( -63 -304 160 ) common/prototype 0 16 0 1 1
+( -64 -64 160 ) ( -63 -64 160 ) ( -64 -63 160 ) common/prototype 0 0 0 1 1
+( 64 64 192 ) ( 64 65 192 ) ( 65 64 192 ) common/prototype 0 0 0 1 1
+( 64 272 192 ) ( 65 272 192 ) ( 64 272 193 ) common/prototype 0 16 0 1 1
+( 256 64 192 ) ( 256 64 193 ) ( 256 65 192 ) common/prototype 0 16 0 1 1
+}
+// brush 8
+{
+( -112 -160 16 ) ( -112 -159 16 ) ( -112 -160 17 ) common/clip 0 0 0 1 1
+( -112 -192 16 ) ( -112 -192 17 ) ( -111 -192 16 ) common/clip 0 0 0 1 1
+( -112 -160 16 ) ( -111 -160 16 ) ( -112 -159 16 ) common/clip 0 0 0 1 1
+( -64 -128 80 ) ( -64 -127 80 ) ( -63 -128 80 ) common/clip 0 0 0 1 1
+( -64 -128 32 ) ( -63 -128 32 ) ( -64 -128 33 ) common/clip 0 0 0 1 1
+( -64 -128 32 ) ( -64 -128 33 ) ( -64 -127 32 ) common/clip 0 0 0 1 1
+}
+}
+// entity 1
+{
+"classname" "light_bake"
+"origin" "112 -176 112"
+"radius" "50"
+"_color" "1 0.9254902 0.54901963"
+"light" "15"
+}
+// entity 2
+{
+"classname" "info_player_start"
+"origin" "0 -8 32"
+}
+// entity 3
+{
+"classname" "light_bake"
+"origin" "24 24 144"
+"target" "spotlighttarget"
+"_color" "0.6862745 0.827451 0.79607844"
+"light" "200"
+"radius" "30"
+}
+// entity 4
+{
+"classname" "info_null"
+"origin" "8 8 24"
+"targetname" "spotlighttarget"
+}
+// entity 5
+{
+"classname" "light_bake"
+"origin" "-192 160 112"
+"radius" "50"
+"_color" "1 0.9254902 0.54901963"
+"light" "15"
+}
+// entity 6
+{
+"classname" "misc_model"
+"origin" "88 -120 25"
+"_castshadows" "1"
+"_receiveshadows" "1"
+"model" "models/pitcher.md3"
+"spawnflags" "4"
+"angles" "0 45 0"
+}
+// entity 7
+{
+"classname" "misc_model"
+"origin" "72 -104 28"
+"_castshadows" "1"
+"_receiveshadows" "1"
+"model" "models/pitcher.md3"
+"spawnflags" "4"
+"angles" "0 90 180"
+}
+// entity 8
+{
+"classname" "misc_model"
+"origin" "71 -122 25"
+"_castshadows" "1"
+"_receiveshadows" "1"
+"model" "models/pitcher.md3"
+"spawnflags" "4"
+"angle" "129"
+}
+// entity 9
+{
+"classname" "misc_model"
+"origin" "80 -118 41"
+"_castshadows" "1"
+"_receiveshadows" "1"
+"model" "models/pitcher.md3"
+"spawnflags" "4"
+"angles" "14 101 103"
+}
+// entity 10
+{
+"classname" "info_location"
+"origin" "-104 -8 24"
+}
+// entity 11
+{
+"classname" "scriptor"
+"origin" "-94 16 48"
+}
+// entity 12
+{
+"classname" "func_system"
+// brush 0
+{
+( -106 -16 16 ) ( -106 -15 16 ) ( -106 -16 17 ) wdplnk_Albedo -16 0 0 1 1
+( -114 0 16 ) ( -114 0 17 ) ( -113 0 16 ) wdplnk_Albedo -14 0 0 1 1
+( -114 -16 16 ) ( -113 -16 16 ) ( -114 -15 16 ) wdplnk_Albedo -14 16 0 1 1
+( -98 48 76 ) ( -98 49 76 ) ( -97 48 76 ) wdplnk_Albedo -14 16 0 1 1
+( -98 32 32 ) ( -97 32 32 ) ( -98 32 33 ) wdplnk_Albedo -14 0 0 1 1
+( -102 48 32 ) ( -102 48 33 ) ( -102 49 32 ) wdplnk_Albedo -16 0 0 1 1
+}
+}
+// entity 13
+{
+"classname" "debug"
+"origin" "-8 -216 120"
+"console" "1"
+}
