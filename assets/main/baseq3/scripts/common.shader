@@ -14,3 +14,14 @@ textures/common/clip
     surfaceparm nodraw
     surfaceparm playerclip
 }
+
+textures/common/prototype
+{
+    qer_editorimage textures/common/prototype.png
+	q3map_shadeAngle 360
+    {
+        map $lightmap
+		blendFunc filter
+        rgbGen identity
+    }
+}

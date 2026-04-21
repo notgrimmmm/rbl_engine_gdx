@@ -63,6 +63,7 @@ public class BSPLoader {
         readFaces(bsp, buf);
         readLightmaps(bsp, buf);
         readVisibility(bsp, buf);
+        readLightGrid(bsp, buf); // <--- ADD THIS LINE
 
         return bsp;
     }
@@ -299,6 +300,17 @@ public class BSPLoader {
         vis.data = new byte[dataSize];
         buf.get(vis.data);
         bsp.visibility = vis;
+    }
+    
+    private static void readLightGrid(BSPFile bsp, ByteBuffer buf) {
+        BSPFile.Lump lump = bsp.lumps[BSPFile.LUMP_LIGHTGRID];
+        if (lump.length == 0) return;
+
+        buf.position(lump.offset);
+        bsp.lightGrid = new byte[lump.length];
+        buf.get(bsp.lightGrid);
+        
+        //System.out.println("LightGrid loaded: " + (lump.length / 8) + " samples found.");
     }
 
     // -----------------------------------------------------------------------

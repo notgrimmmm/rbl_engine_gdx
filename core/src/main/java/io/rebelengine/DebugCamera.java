@@ -15,7 +15,8 @@ public class DebugCamera extends PerspectiveCamera{
     
     public DebugCamera(Vector3 origin){
         super(90f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        this.far = 4196;
+        this.near = 16f;
+        this.far = 4196f;
         this.position.set(origin);
     }
     

@@ -4,11 +4,17 @@
  */
 package io.rebelengine;
 
+import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.math.Vector3;
+
 /**
  * BSP 46
  */
 public class BSPTree {
     private final BSPFile bsp;
+    
+    private final Vector3 tmpMin = new Vector3();
+    private final Vector3 tmpMax = new Vector3();
 
     public BSPTree(BSPFile bsp) {
         this.bsp = bsp;
@@ -62,19 +68,19 @@ public class BSPTree {
      * @param faceStamp    pre-allocated boolean[] of size bsp.faces.length (zeroed each frame)
      * @return             number of faces written into outFaces
      */
-    public int collectVisibleFaces(int cameraLeaf, int[] outFaces, boolean[] faceStamp) {
+    public int collectVisibleFaces(int cameraLeaf, int[] outFaces, boolean[] faceStamp, Camera camera) {
         int cameraCluster = getCluster(cameraLeaf);
         int[] count = { 0 };
 
         // Clear stamps
         java.util.Arrays.fill(faceStamp, false);
 
-        walkNode(0, cameraCluster, outFaces, faceStamp, count);
+        walkNode(0, cameraCluster, outFaces, faceStamp, count, camera);
         return count[0];
     }
 
     private void walkNode(int nodeIndex, int cameraCluster,
-                          int[] out, boolean[] stamp, int[] count) {
+                          int[] out, boolean[] stamp, int[] count, Camera camera) {
         if (nodeIndex < 0) {
             // It's a leaf
             int leafIndex = -(nodeIndex + 1);
@@ -95,12 +101,36 @@ public class BSPTree {
 
         // Recurse back-to-front (painter's algorithm)
         BSPFile.Node node = bsp.nodes[nodeIndex];
-        walkNode(node.children[1], cameraCluster, out, stamp, count);
-        walkNode(node.children[0], cameraCluster, out, stamp, count);
+        
+        // frustrum culling 
+        if (!isNodeVisible(node, camera)) return;
+        
+        walkNode(node.children[1], cameraCluster, out, stamp, count, camera);
+        walkNode(node.children[0], cameraCluster, out, stamp, count, camera);
+    }
+    
+    private boolean isNodeVisible(BSPFile.Node node, Camera camera) {
+        // Check if node AABB intersects camera frustum
+        float minX = node.minX, minY = node.minY, minZ = node.minZ;
+        float maxX = node.maxX, maxY = node.maxY, maxZ = node.maxZ;
+
+        // Convert Q3 coords to GL coords for frustum check
+        // Q3(x,y,z) -> GL(x, z, -y)
+        tmpMin.set(minX, minZ, -maxY);
+        tmpMax.set(maxX, maxZ, -minY);
+
+        return camera.frustum.boundsInFrustum(
+            (tmpMin.x + tmpMax.x) * 0.5f,
+            (tmpMin.y + tmpMax.y) * 0.5f,
+            (tmpMin.z + tmpMax.z) * 0.5f,
+            (tmpMax.x - tmpMin.x) * 0.5f,
+            (tmpMax.y - tmpMin.y) * 0.5f,
+            (tmpMax.z - tmpMin.z) * 0.5f
+        );
     }
 
     // -----------------------------------------------------------------------
-    // 4. Bezier patch tessellation
+    //  Bezier patch tessellation
     // -----------------------------------------------------------------------
 
     /**

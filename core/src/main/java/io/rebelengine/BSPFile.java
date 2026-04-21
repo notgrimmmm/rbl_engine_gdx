@@ -160,6 +160,11 @@ public class BSPFile {
 
         // For FACE_PATCH only: control point grid dimensions
         public int patchWidth, patchHeight;
+        
+        // Light styles — up to 4 animated lightmap sets per face
+        // styles[0] is always 0 (base static lightmap)
+        // styles[1-3] are animated style indices (255 = unused)
+        public byte[] styles = new byte[]{ 0, (byte)255, (byte)255, (byte)255 };
     }
 
     // -----------------------------------------------------------------------
@@ -218,5 +223,6 @@ public class BSPFile {
     public Lightmap[]  lightmaps;
     public Visibility  visibility;
     public String      entities;
+    public byte[] lightGrid;  // raw light grid data from lump 15
 }
 

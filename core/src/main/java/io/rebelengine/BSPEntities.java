@@ -23,4 +23,9 @@ public class BSPEntities {
             byClass.computeIfAbsent(cls, k -> new ArrayList<>()).add(ent);
         }
     }
+    // Get first entity of a class or null — saves the null check + getFirst() pattern
+    public Entity first(String classname) {
+        List<Entity> list = byClass.get(classname);
+        return (list != null && !list.isEmpty()) ? list.get(0) : null;
+    }
 }
