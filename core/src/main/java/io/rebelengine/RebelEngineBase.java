@@ -4,15 +4,22 @@
  */
 package io.rebelengine;
 
-import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
-import io.rebelengine.Components.EngineInput;
+
+import io.rebelengine.Systems.CameraSyncSystem;
+import io.rebelengine.Systems.PlayerFrameInputSystem;
+import io.rebelengine.Systems.PhysicsBodySystem;
+import io.rebelengine.Systems.PlayerLocomotionSystem;
+import io.rebelengine.Systems.TransformInterpolationSystem;
+import io.rebelengine.Commands.StatsCommand;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -23,49 +30,52 @@ import java.util.List;
  */
 public class RebelEngineBase implements Disposable{
     private static final float FIXED_STEP = 1f / 60f;
+    private static final float MAX_FRAME_TIME = 0.25f;
+    private static final float ALPHA_EPSILON = 0.0001f;
+
     private float accumulator = 0f;
-    
-    //entitiy
-    public final Engine ASHLEY;
-    
-    //managers
-    
-    //unified shader
+
+    public final RebelAshleyEngine ASHLEY;
+
     public EngineShader SHADER;
-    //bsp
     public BSPRenderer  BSP_RENDERER;
     public BSPTree      BSP_TREE;
     public BSPFile      BSP;
-    
-    //bsp physics
+
     public BSPCollision BSP_COLLISION;
-    
-    //dyanmic render
     public DynamicRenderer DYN_RENDERER;
-    
-    //camera - the active render camera, can be replaced 
+
     public Camera camera;
-    
-    //inputs
-    public InputMultiplexer inputMultiplexer;
-    
-    BasePlayerControl player;
-    
-    EngineInput input;
+
+    private final InputMultiplexer inputMultiplexer;
+    private final DebuggingConsole debuggingConsole;
+    private final EngineFrameInputProcessor frameInputProcessor;
+    private final PlayerFrameInputSystem playerFrameInputSystem;
+    private final PlayerLocomotionSystem playerLocomotionSystem;
+    private final PhysicsBodySystem physicsBodySystem;
+    private final TransformInterpolationSystem transformInterpolationSystem;
+    private final CameraSyncSystem cameraSyncSystem;
     
     public RebelEngineBase() {
-        this.ASHLEY = new Engine();
+        this.ASHLEY = new RebelAshleyEngine();
         this.SHADER = new EngineShader();
         this.inputMultiplexer = new InputMultiplexer();
-        //create game context when initializing the engine to add, remove, edit, anything during runtime
-        
-        //make a debug camera class and init the camera class
-        
-        
-        //initialize and add all managers to ASHLEY
-            // make sure you can pass a settings 'file' from game to the engine to edit sound, brightness, graphics, controls, etc
+        this.debuggingConsole = new DebuggingConsole(this);
+        this.frameInputProcessor = new EngineFrameInputProcessor(ASHLEY);
+        this.playerFrameInputSystem = new PlayerFrameInputSystem();
+        this.playerLocomotionSystem = new PlayerLocomotionSystem();
+        this.physicsBodySystem = new PhysicsBodySystem();
+        this.transformInterpolationSystem = new TransformInterpolationSystem();
+        this.cameraSyncSystem = new CameraSyncSystem();
+        ASHLEY.addSystem(playerFrameInputSystem);
+        ASHLEY.addSystem(playerLocomotionSystem);
+        ASHLEY.addSystem(physicsBodySystem);
+        ASHLEY.addSystem(transformInterpolationSystem);
+        ASHLEY.addSystem(cameraSyncSystem);
+        debuggingConsole.registerCommand(new StatsCommand());
+        inputMultiplexer.addProcessor(debuggingConsole);
+        inputMultiplexer.addProcessor(frameInputProcessor);
 
-        //make a camera here as main (it can bet set to any camera for rendering)
         camera = new PerspectiveCamera(90,
             Gdx.graphics.getWidth(),
             Gdx.graphics.getHeight());
@@ -99,21 +109,12 @@ public class RebelEngineBase implements Disposable{
         BSP_RENDERER.buildGeometry(textureRoot);
         
         BSP_COLLISION = new BSPCollision(BSP);
+        physicsBodySystem.setCollision(BSP_COLLISION);
         
         DYN_RENDERER = new DynamicRenderer(SHADER, textureRoot);
-        
-        
-        //ashley setup
-//        input = new EngineInput();
-//        ASHLEY.addSystem(new SystemsBag.ControlSystem(input));
-//        ASHLEY.addSystem(new SystemsBag.bspPhysicsSystem(BSP_COLLISION));
-//        ASHLEY.addSystem(new SystemsBag.RenderSyncSystem(camera));
-        
  
-        // Parse the entities[] from the bsp file
         BSPEntities parsedEntities = BSPEntityParser.parse(BSP.entities);
-        
-        // debugging ent
+
         BSPEntities.Entity debugEnt = parsedEntities.first("debug");
         if (debugEnt != null) {
             Vector3 depos = Utilities.parseVector3(debugEnt.get("origin"));
@@ -122,14 +123,12 @@ public class RebelEngineBase implements Disposable{
             //setCamera(dcam);
         }
 
-        
-        // player ent TODO: set it to one only
         BSPEntities.Entity playerEnt = parsedEntities.first("info_player_start");
         if (playerEnt != null) {
             Vector3 ppos = Utilities.parseVector3(playerEnt.get("origin"));
-            
-            player = new BasePlayerControl(BSP_COLLISION, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-            player.setSpawnPosition(ppos.x, ppos.y, ppos.z);
+
+            BasePlayer player = new BasePlayer(ppos);
+            ASHLEY.addEntity(player.getEntity());
             setCamera(player.getCamera());
         }
         
@@ -153,14 +152,14 @@ public class RebelEngineBase implements Disposable{
     }
     
     public void render(float delta){
-        //separate into delta and alpha for use in physics interpolation and fixedtime
-
-        //render everything and cull where necessary
         if (BSP_RENDERER == null || camera == null) return;
-        
-        //update main camera render here
+
+        debuggingConsole.update(delta);
+        playerFrameInputSystem.setInputBlocked(debuggingConsole.isVisible());
+        ASHLEY.updateFrame();
+        float alpha = stepSimulation(delta);
+        ASHLEY.updateRender(alpha);
         camera.update();
-        steps(delta);
         
         // Convert GL camera position to Q3 coords for PVS lookup
         // GL(x, y, z) -> Q3(x, -z, y)
@@ -169,11 +168,12 @@ public class RebelEngineBase implements Disposable{
         float q3z =  camera.position.y;
         
         SHADER.clearLights();
-        //SHADER.addSpotLight(player.getCamera().position, 500f, camera.direction, Color.WHITE, 30f);
+        //SHADER.addSpotLight(camera.position, 500f, camera.direction, Color.WHITE, 30f);
         SHADER.bind(); 
 
         BSP_RENDERER.render(camera, q3x, q3y, q3z);
         DYN_RENDERER.render(camera); //already contains instances added
+        debuggingConsole.render();
     }
     
     /**
@@ -182,15 +182,20 @@ public class RebelEngineBase implements Disposable{
      *        alpha - use for interpolating physics
      *   fixed_step - use for any physcis movement
      */
-    public void steps(float delta){
-        accumulator += delta;
+    public float stepSimulation(float delta){
+        boolean stepped = false;
+        accumulator += Math.min(delta, MAX_FRAME_TIME);
         while (accumulator >= FIXED_STEP){
             accumulator -= FIXED_STEP;
-            if (player != null) player.updatePhysics(FIXED_STEP);
+            ASHLEY.updateFixed(FIXED_STEP);
+            stepped = true;
         }
-        
+
         float alpha = accumulator / FIXED_STEP;
-        player.update(alpha);
+        if (stepped && alpha <= ALPHA_EPSILON) {
+            return 1f;
+        }
+        return alpha;
     }
     
     /**
@@ -201,15 +206,21 @@ public class RebelEngineBase implements Disposable{
         camera.viewportWidth  = width;
         camera.viewportHeight = height;
         camera.update();
+        debuggingConsole.resize(width, height);
     }
     
     public void setCamera(Camera cam){
         this.camera = cam;
+    }
+
+    public InputProcessor getInputProcessor() {
+        return inputMultiplexer;
     }
     
     @Override
     public void dispose() {
         if (BSP_RENDERER != null)   BSP_RENDERER.dispose();
         if (SHADER != null)         SHADER.dispose();
+        debuggingConsole.dispose();
     }
 }

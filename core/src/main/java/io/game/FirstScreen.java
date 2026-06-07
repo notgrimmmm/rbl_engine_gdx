@@ -4,12 +4,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
-import io.rebelengine.DebugCamera;
 import io.rebelengine.RebelEngineBase;
 
 public class FirstScreen implements Screen {
 
-    private static final String MAP_PATH     = "main/example.bsp";
+    private static final String MAP_PATH     = "main/ant.bsp";
     private static final String TEXTURE_ROOT = "main/baseq3";
 
     private final RebelEngineBase ENGINE;
@@ -22,6 +21,7 @@ public class FirstScreen implements Screen {
     public void show() {
         // --- Load map ---
         ENGINE.loadMap(MAP_PATH, TEXTURE_ROOT);
+        Gdx.input.setInputProcessor(ENGINE.getInputProcessor());
         
         // Mouse options
         Gdx.input.setCursorCatched(true);

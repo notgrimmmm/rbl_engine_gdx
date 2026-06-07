@@ -15,7 +15,8 @@ import com.badlogic.gdx.math.Vector3;
  *   player.setSpawnPosition(x, y, z);
  *   engine.setCamera(player.getCamera());
  *   // each frame:
- *   player.update(delta);
+ *   player.beginFrame();
+ *   player.render(alpha);
  */
 public class BasePlayerControl {
 
@@ -60,15 +61,19 @@ public class BasePlayerControl {
     private boolean onGround  = false;
     private boolean crouching = false;
     private boolean noclip    = false; // debug fly mode
+    private boolean wantsCrouch = false;
+    private boolean jumpQueued  = false;
+
+    private float moveForward = 0f;
+    private float moveStrafe  = 0f;
 
     // Scratch
     private final Vector3 wishDir  = new Vector3();
     private final Vector3 tmp      = new Vector3();
     private final BSPCollision.TraceResult tr = new BSPCollision.TraceResult();
     
-    Vector3 prevPos = new Vector3();
-    Vector3 currentPos = new Vector3();
-    Vector3 eyeScale = new Vector3(0,EYE_STAND,0);
+    private final Vector3 prevPos = new Vector3();
+    private final Vector3 currentPos = new Vector3();
 
     // -----------------------------------------------------------------------
     // Constructor
@@ -90,33 +95,52 @@ public class BasePlayerControl {
      */
     public void setSpawnPosition(float x, float y, float z) {
         position.set(x, y, z);
-        //updateCamera();
+        prevPos.set(position);
         currentPos.set(position);
+        updateCamera(1f);
     }
 
     public PerspectiveCamera getCamera() { return camera; }
 
     // -----------------------------------------------------------------------
-    // Per-frame update
+    // Frame/update loop
     // -----------------------------------------------------------------------
 
-    public void update(float alpha) {
+    public void beginFrame() {
+        sampleInput();
         handleMouseLook();
+    }
+
+    public void render(float alpha) {
         updateCamera(alpha);
     }
     
-    public void updatePhysics(float fixedstep){
+    public void updatePhysics(float fixedstep) {
         prevPos.set(currentPos);
+        updateCrouchState();
         applyGravity(fixedstep);  
-        handleMovement(fixedstep);
+        handleMovement();
         handleJump();
         moveAndCollide(fixedstep);
-        currentPos.set(getPosition());
+        currentPos.set(position);
     }
 
     // -----------------------------------------------------------------------
     // Input
     // -----------------------------------------------------------------------
+
+    private void sampleInput() {
+        moveForward = 0f;
+        moveStrafe = 0f;
+
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) moveForward += 1f;
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) moveForward -= 1f;
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) moveStrafe += 1f;
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) moveStrafe -= 1f;
+
+        wantsCrouch = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
+        jumpQueued |= Gdx.input.isKeyJustPressed(Input.Keys.SPACE);
+    }
 
     private void handleMouseLook() {
         if (!Gdx.input.isCursorCatched()) return;
@@ -125,42 +149,43 @@ public class BasePlayerControl {
         pitch  = Math.max(-89f, Math.min(89f, pitch));
     }
 
-    private void handleMovement(float delta) {
+    private void updateCrouchState() {
+        if (wantsCrouch == crouching) return;
+
+        float heightDiff = (HEIGHT_STAND - HEIGHT_CROUCH) / 2f;
+        if (wantsCrouch) {
+            // Box shrank: lower the center so the feet stay on the floor.
+            position.y -= heightDiff;
+            crouching = true;
+            return;
+        }
+
+        Vector3 standMins = MINS_STAND;
+        Vector3 standMaxs = MAXS_STAND;
+        tmp.set(position).add(0f, heightDiff, 0f);
+        tr.reset();
+        collision.traceBox(position, tmp, standMins, standMaxs, tr);
+        if (tr.fraction == 1f && !tr.startSolid) {
+            position.y += heightDiff;
+            crouching = false;
+        }
+    }
+
+    private void handleMovement() {
         float cos = (float) Math.cos(Math.toRadians(yaw));
         float sin = (float) Math.sin(Math.toRadians(yaw));
 
         wishDir.set(0, 0, 0);
 
-        // 1. Get raw input direction
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) { wishDir.x +=  sin; wishDir.z += -cos; }
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) { wishDir.x -=  sin; wishDir.z -= -cos; }
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) { wishDir.x +=  cos; wishDir.z +=  sin; }
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) { wishDir.x -=  cos; wishDir.z -=  sin; }
-
-        //crouching = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
-        boolean wasCrouching = crouching;
-        crouching = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
-
-        // If we JUST started crouching or JUST stopped
-        if (crouching != wasCrouching) {
-            float heightDiff = (HEIGHT_STAND - HEIGHT_CROUCH) / 2f;
-            if (crouching) {
-                // Box shrank: Lower the center so the feet stay on the floor
-                position.y -= heightDiff;
-            } else {
-                // Box grew: Raise the center so the feet stay on the floor
-                position.y += heightDiff;
-
-                // OPTIONAL: Check if there is room to stand up
-                // If you stand up under a low ceiling, you might get stuck in the geometry.
-                // You should ideally run a traceBox here to see if you're blocked.
-            }
+        if (moveForward != 0f) {
+            wishDir.x += sin * moveForward;
+            wishDir.z += -cos * moveForward;
         }
-        
-        
-        
-        
-        
+        if (moveStrafe != 0f) {
+            wishDir.x += cos * moveStrafe;
+            wishDir.z += sin * moveStrafe;
+        }
+
         float speed = crouching ? MOVE_SPEED * 0.5f : MOVE_SPEED;
 
         if (wishDir.len2() > 0) {
@@ -180,10 +205,11 @@ public class BasePlayerControl {
     }
 
     private void handleJump() {
-        if (onGround && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        if (jumpQueued && onGround) {
             velocity.y = JUMP_VELOCITY;
             onGround   = false;
         }
+        jumpQueued = false;
     }
 
     private void applyGravity(float delta) {
