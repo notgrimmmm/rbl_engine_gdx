@@ -2,12 +2,18 @@
 
 A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
 
-This project was generated with a template including simple application launchers and a main class extending `Game` that sets the first screen.
+BSP46-custom engine. Compiled on Trenchbroom using q3map2 dlls.
 
-## Platforms
+## Documentation
 
-- `core`: Main module with the application logic shared by all platforms.
-- `lwjgl3`: Primary desktop platform using LWJGL3; was called 'desktop' in older docs.
+- `scriptor` should always target the components it needs as a target group, 
+    make sure the targetname is the same for all components needed. Triggers, Locations, etc.
+    ```
+    Trenchbroom scriptor point entity properties
+    class   |   java class (EntityScript), case-sensitive
+    target  |   targetComponentGroupName_Thing_Area ex: trig_ldr_beginsewer
+    ```
+- `trigger_ent` 
 
 ## Gradle
 

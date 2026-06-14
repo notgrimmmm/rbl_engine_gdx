@@ -8,24 +8,22 @@ import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.MathUtils;
+import io.rebelengine.Components.InputControlComponent;
 import io.rebelengine.Components.MouseLookComponent;
 import io.rebelengine.Components.PlayerInputComponent;
 import io.rebelengine.Components.TransformComponent;
+import io.rebelengine.InputFocus;
 import io.rebelengine.RebelAshleyEngine;
 
 public class PlayerFrameInputSystem extends EntitySystem implements RebelAshleyEngine.FrameUpdatable {
     private static final Family FAMILY = Family.all(
+        InputControlComponent.class,
         PlayerInputComponent.class,
         TransformComponent.class,
         MouseLookComponent.class
     ).get();
 
     private ImmutableArray<Entity> entities;
-    private boolean inputBlocked;
-
-    public void setInputBlocked(boolean inputBlocked) {
-        this.inputBlocked = inputBlocked;
-    }
 
     @Override
     public void addedToEngine(Engine engine) {
@@ -35,22 +33,19 @@ public class PlayerFrameInputSystem extends EntitySystem implements RebelAshleyE
     @Override
     public void frameUpdate() {
         for (Entity entity : entities) {
+            // InputFocus is the single source of truth. If this entity is not
+            // the focused one, or input is globally locked, do nothing — and
+            // also clear any stale mouse deltas so they don't snap in on regain.
+            if (!InputFocus.is(entity)) {
+                MouseLookComponent ml = entity.getComponent(MouseLookComponent.class);
+                ml.accumulatedDeltaX = 0f;
+                ml.accumulatedDeltaY = 0f;
+                continue;
+            }
+
             PlayerInputComponent input = entity.getComponent(PlayerInputComponent.class);
             TransformComponent transform = entity.getComponent(TransformComponent.class);
             MouseLookComponent mouseLook = entity.getComponent(MouseLookComponent.class);
-
-            if (!input.active) {
-                continue;
-            }
-
-            if (inputBlocked) {
-                input.moveForward = 0f;
-                input.moveRight = 0f;
-                input.crouchHeld = false;
-                mouseLook.accumulatedDeltaX = 0f;
-                mouseLook.accumulatedDeltaY = 0f;
-                continue;
-            }
 
             input.moveForward = 0f;
             input.moveRight = 0f;

@@ -18,30 +18,46 @@ public class EngineFrameInputProcessor extends InputAdapter {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
+        // If the cursor is uncaptured (e.g. console open), don't accumulate
+        // mouse motion — releasing/capturing will reseed the baseline below.
         if (!Gdx.input.isCursorCatched()) {
             resetMouseTracking();
             return false;
         }
 
-        ImmutableArray<Entity> entities = engine.getEntitiesFor(FAMILY);
-        for (Entity entity : entities) {
-            MouseLookComponent mouseLook = entity.getComponent(MouseLookComponent.class);
-            if (!mouseLook.active) {
-                continue;
-            }
+        // Globally locked (console, pause, cutscene) — drop the deltas.
+        if (InputFocus.isLocked()) {
+            return false;
+        }
 
-            if (!mouseLook.hasLastMousePosition) {
-                mouseLook.lastMouseX = screenX;
-                mouseLook.lastMouseY = screenY;
-                mouseLook.hasLastMousePosition = true;
-                continue;
-            }
+        Entity focused = InputFocus.get();
+        // No focused entity — nothing to do, but make sure stale state is gone.
+        if (focused == null) {
+            resetMouseTracking();
+            return false;
+        }
 
-            mouseLook.accumulatedDeltaX += screenX - mouseLook.lastMouseX;
-            mouseLook.accumulatedDeltaY += screenY - mouseLook.lastMouseY;
+        // Apply only to the focused entity (if it has a MouseLookComponent).
+        MouseLookComponent mouseLook = focused.getComponent(MouseLookComponent.class);
+        if (mouseLook == null) {
+            return false;
+        }
+
+        if (!mouseLook.active) {
+            return false;
+        }
+
+        if (!mouseLook.hasLastMousePosition) {
             mouseLook.lastMouseX = screenX;
             mouseLook.lastMouseY = screenY;
+            mouseLook.hasLastMousePosition = true;
+            return false;
         }
+
+        mouseLook.accumulatedDeltaX += screenX - mouseLook.lastMouseX;
+        mouseLook.accumulatedDeltaY += screenY - mouseLook.lastMouseY;
+        mouseLook.lastMouseX = screenX;
+        mouseLook.lastMouseY = screenY;
         return false;
     }
 
@@ -55,6 +71,8 @@ public class EngineFrameInputProcessor extends InputAdapter {
         for (Entity entity : entities) {
             MouseLookComponent mouseLook = entity.getComponent(MouseLookComponent.class);
             mouseLook.hasLastMousePosition = false;
+            mouseLook.accumulatedDeltaX = 0f;
+            mouseLook.accumulatedDeltaY = 0f;
         }
     }
 }

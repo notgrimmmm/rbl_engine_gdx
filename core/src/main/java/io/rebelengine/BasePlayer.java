@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.math.Vector3;
 import io.rebelengine.Components.CameraComponent;
+import io.rebelengine.Components.InputControlComponent;
 import io.rebelengine.Components.MouseLookComponent;
 import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.PlayerInputComponent;
@@ -22,6 +23,7 @@ public class BasePlayer {
 
     public BasePlayer(Vector3 spawnPosition) {
         entity = new Entity();
+        entity.flags = EntityFlags.PLAYER | EntityFlags.INITIATOR; // initiator is the one that triggers 
 
         TransformComponent transform = new TransformComponent();
         transform.previousPosition.set(spawnPosition);
@@ -46,12 +48,21 @@ public class BasePlayer {
         CameraComponent cameraComponent = new CameraComponent();
         cameraComponent.camera = camera;
 
+        InputControlComponent control = new InputControlComponent();
+        control.priority = 100; // players win focus arbitration over vehicles/spectators
+
         entity.add(transform);
         entity.add(input);
         entity.add(mouseLook);
         entity.add(physics);
         entity.add(cameraComponent);
+        entity.add(control);
         camera.update();
+    }
+
+    /** Set input focus to this player. */
+    public void focus() {
+        InputFocus.set(entity);
     }
 
     public Entity getEntity() {

@@ -15,6 +15,12 @@ textures/common/clip
     surfaceparm playerclip
 }
 
+textures/common/trigger
+{
+	surfaceparm nodraw
+	surfaceparm nonsolid
+}
+
 textures/common/prototype
 {
     qer_editorimage textures/common/prototype.png

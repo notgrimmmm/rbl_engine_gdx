@@ -10,9 +10,8 @@ import io.rebelengine.Components.TransformComponent;
 
 public class TransformInterpolationSystem extends EntitySystem implements RebelAshleyEngine.AlphaUpdatable {
     private static final Family FAMILY = Family.all(TransformComponent.class).get();
-
     private ImmutableArray<Entity> entities;
-
+    
     @Override
     public void addedToEngine(Engine engine) {
         entities = engine.getEntitiesFor(FAMILY);

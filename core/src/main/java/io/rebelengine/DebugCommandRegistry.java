@@ -1,6 +1,8 @@
 package io.rebelengine;
 
+import com.badlogic.gdx.utils.Array;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -35,5 +37,14 @@ public class DebugCommandRegistry {
         for (DebugCommand command : commands.values()) {
             command.render(renderContext, context);
         }
+    }
+    
+    public String[] getCommandNames() {
+        String[] names = new String[commands.size()];
+        int i = 0;
+        for (DebugCommand value : commands.values()) {
+            names[i++] = value.key();
+        }
+        return names;
     }
 }

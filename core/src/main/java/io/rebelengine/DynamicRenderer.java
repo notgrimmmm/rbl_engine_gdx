@@ -30,6 +30,7 @@ public class DynamicRenderer implements Disposable {
 
     public static class RenderInstance {
         public String meshKey;
+        public int bmIndex;
         public Vector3 position = new Vector3();
         public Vector3 rotation = new Vector3();
         public Vector3 lightGridColor = new Vector3(1, 1, 1);
@@ -47,12 +48,21 @@ public class DynamicRenderer implements Disposable {
         }
     }
 
+    public static Vector3 getModelCenter(BSPFile.Model bModel) {
+        return new Vector3(
+            (bModel.minX + bModel.maxX) * 0.5f,
+            (bModel.minZ + bModel.maxZ) * 0.5f,
+            -(bModel.minY + bModel.maxY) * 0.5f
+        );
+    }
+
     private Mesh buildMeshFromModel(BSPFile.Model bModel, BSPFile bsp) {
         Array<Float> vList = new Array<>();
         Array<Short> iList = new Array<>();
+        Vector3 modelCenter = getModelCenter(bModel);
 
-        // Quake 3 brushes use 'origin' in entities, but the vertices are 
-        // usually absolute. We extract them relative to the world for now.
+        // BSP brush-model vertices are stored in world space. Dynamic instances
+        // need local vertices so their transform can be their world position.
         for (int i = 0; i < bModel.numFaces; i++) {
             BSPFile.Face face = bsp.faces[bModel.firstFace + i];
             int base = vList.size / 7;
@@ -61,7 +71,12 @@ public class DynamicRenderer implements Disposable {
                 for (int v = 0; v < face.numVertices; v++) {
                     BSPFile.Vertex bv = bsp.vertices[face.firstVertex + v];
                     // Pos (X, Z, -Y) | UV0 | UV1 (placeholder 0)
-                    vList.addAll(bv.x, bv.z, -bv.y, bv.u0, bv.v0, 0f, 0f);
+                    vList.addAll(
+                        bv.x - modelCenter.x,
+                        bv.z - modelCenter.y,
+                        -bv.y - modelCenter.z,
+                        bv.u0, bv.v0, 0f, 0f
+                    );
                 }
                 for (int m = 0; m < face.numMeshVerts; m++) {
                     iList.add((short) (base + bsp.meshVerts[face.firstMeshVert + m]));

@@ -1,6 +1,7 @@
 package io.rebelengine;
 
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
 
 /**
  * BSP brush collision — sweeps a capsule/AABB against solid brush planes.
@@ -24,7 +25,7 @@ public class BSPCollision {
 
     // Scratch vectors — reused to avoid allocation
     private final Vector3 tmp1 = new Vector3();
-    private final Vector3 tmp2 = new Vector3();
+    private final TraceResult tmpTraceResult = new TraceResult(); // used for overlaps where we dont want a physical collision
 
     // -----------------------------------------------------------------------
     // Trace result
@@ -38,12 +39,16 @@ public class BSPCollision {
         public boolean startSolid = false;
         /** True if entire trace is inside solid */
         public boolean allSolid   = false;
+        
+        public Array<Integer> nonSolidOverlapIndices = new Array<>(false, 4); // collect brush index of non solid to compare later
 
         public void reset() {
             fraction   = 1.0f;
             normal.set(0, 0, 0);
             startSolid = false;
             allSolid   = false;
+            
+            nonSolidOverlapIndices.clear();
         }
     }
 
@@ -72,15 +77,63 @@ public class BSPCollision {
                          TraceResult result) {
         result.reset();
         // Check all solid brushes in the world model
-        BSPFile.Model world = bsp.models[0];
-        for (int bi = 0; bi < bsp.brushes.length; bi++) {
-            BSPFile.Brush brush = bsp.brushes[bi];
+        // only collide with the static brushes in the bsp ( models[0] )
+        // other models like brush entities are in models *1, *2, etc
+        BSPFile.Model world = bsp.models[0]; // unused bc we want to collide with triggers which are not in [0]
+        
+        for (int bi = 0; bi < world.numBrushes; bi++) {
+
+            BSPFile.Brush brush = bsp.brushes[world.firstBrush + bi];
             // Only test solid brushes
             if (!isSolid(brush)) continue;
+            
             traceThroughBrush(brush, start, end, mins, maxs, result);
             if (result.allSolid) return;
         }
     }
+    public void traceBox(Vector3 start, Vector3 end,
+                        Vector3 mins,  Vector3 maxs,
+                        TraceResult result, int skipModelIndex) {
+       result.reset();
+
+       // trace against the world geometry (models[0]) first
+       BSPFile.Model world = bsp.models[0];
+       for (int bi = 0; bi < world.numBrushes; bi++) {
+           BSPFile.Brush brush = bsp.brushes[world.firstBrush + bi];
+           if (!isSolid(brush)) continue;
+
+           traceThroughBrush(brush, start, end, mins, maxs, result);
+           if (result.allSolid) return;
+       }
+
+       // loop through all OTHER sub-models (dynamic entities/triggers)
+       for (int mi = 1; mi < bsp.models.length; mi++) {
+           
+           if (mi == skipModelIndex) continue; 
+
+           BSPFile.Model subModel = bsp.models[mi];
+
+           // Loop ONLY through the brushes that belong to this specific sub-model
+           for (int bi = 0; bi < subModel.numBrushes; bi++) {
+               BSPFile.Brush brush = bsp.brushes[subModel.firstBrush + bi];
+               tmpTraceResult.reset(); // reset temp for overlap
+               
+               if (!isSolid(brush)) {
+                   // Collect trigger zones / items if hit
+                   traceThroughBrush(brush, start, end, mins, maxs, tmpTraceResult);
+                   if (tmpTraceResult.startSolid || tmpTraceResult.fraction < 1.0){
+                       result.nonSolidOverlapIndices.add(mi); // mi is the real submodel index, bi is the index inside that mi brush
+                       return;
+                   }
+                   
+                   continue;
+               }
+
+               traceThroughBrush(brush, start, end, mins, maxs, result);
+               if (result.allSolid) return;
+           }
+       }
+   }
 
     /**
      * Simplified point trace — no box, just a ray.
@@ -104,17 +157,18 @@ public class BSPCollision {
         Vector3 clipNormal = new Vector3();
         boolean startOut = false;
 
+        float maxDist1 = -Float.MAX_VALUE;
+        Vector3 bestNormal = new Vector3();
+
         for (int si = 0; si < brush.numSides; si++) {
             BSPFile.BrushSide side  = bsp.brushSides[brush.firstSide + si];
             BSPFile.Plane     plane = bsp.planes[side.planeIndex];
 
-            // Convert plane normal from Q3 to GL coords: Q3(nx,ny,nz) -> GL(nx,nz,-ny)
             float pnx = plane.nx;
             float pny = plane.nz;
             float pnz = -plane.ny;
             float pd   = plane.dist;
 
-            // Expand plane by box extents (Minkowski sum)
             float offset = 0f;
             if (pnx > 0) offset += maxs.x * pnx; else offset += mins.x * pnx;
             if (pny > 0) offset += maxs.y * pny; else offset += mins.y * pny;
@@ -124,30 +178,29 @@ public class BSPCollision {
             float dist2 = end.x   * pnx + end.y   * pny + end.z   * pnz - (pd + offset);
 
             if (dist1 > 0) startOut = true;
+            if (dist1 > maxDist1) {
+                maxDist1 = dist1;
+                bestNormal.set(pnx, pny, pnz);
+            }
 
-            // Both in front — no collision with this plane
-            if (dist1 > 0 && dist2 >= 0) return;
-            // Both behind — skip this plane
+            if (dist1 > 0 && dist2 > 0) return;
             if (dist1 <= 0 && dist2 <= 0) continue;
 
-            float denom = dist1 - dist2;
             if (dist1 > dist2) {
-                // Entering
-                float f = (dist1 - EPSILON) / denom;
+                float f = (dist1 - EPSILON) / (dist1 - dist2);
                 if (f > enterFrac) {
                     enterFrac = f;
                     clipNormal.set(pnx, pny, pnz);
                 }
             } else {
-                // Leaving
-                float f = (dist1 + EPSILON) / denom;
+                float f = (dist1 + EPSILON) / (dist1 - dist2);
                 if (f < leaveFrac) leaveFrac = f;
             }
         }
 
         if (!startOut) {
             result.startSolid = true;
-            result.allSolid   = (leaveFrac <= 0);
+            result.normal.set(bestNormal);
             return;
         }
 
@@ -164,7 +217,7 @@ public class BSPCollision {
     // -----------------------------------------------------------------------
 
     private static final int   MAX_CLIP_PLANES = 4;
-    private static final float EPSILON         = 0.01125f; // 1/32 unit
+    private static final float EPSILON         = 0.03125f; // 1/32 unit
     private static final float STOP_EPSILON    = 0.1f;
 
     /**
@@ -191,21 +244,20 @@ public class BSPCollision {
             end.set(position).add(tmp1.set(velocity).scl(timeLeft));
             traceBox(position, end, mins, maxs, tr);
 
-            if (tr.allSolid) {
-                velocity.set(0, 0, 0);
-                return;
+            if (tr.startSolid) {
+                // Already inside something, clip velocity and try to move anyway
+                clipVelocity(velocity, tr.normal, velocity, 1.0f);
+                continue;
             }
 
             if (tr.fraction > 0) {
                 position.add(tmp1.set(velocity).scl(timeLeft * tr.fraction));
-                numPlanes = 0;
             }
 
-            if (tr.fraction == 1f) break; // moved all the way
+            if (tr.fraction == 1f) break;
 
             timeLeft -= timeLeft * tr.fraction;
 
-            // Store hit plane
             if (numPlanes < MAX_CLIP_PLANES) {
                 planes[numPlanes].set(tr.normal);
                 numPlanes++;
@@ -214,17 +266,6 @@ public class BSPCollision {
             // Clip velocity against all hit planes
             for (int i = 0; i < numPlanes; i++) {
                 clipVelocity(velocity, planes[i], velocity, 1.01f);
-            }
-
-            // Check if we're going back into a previous plane
-            boolean ok = true;
-            for (int i = 0; i < numPlanes; i++) {
-                if (velocity.dot(planes[i]) < 0) { ok = false; break; }
-            }
-            if (!ok) {
-                // Zero out velocity
-                velocity.set(0, 0, 0);
-                break;
             }
         }
     }
@@ -235,7 +276,10 @@ public class BSPCollision {
      */
     public static void clipVelocity(Vector3 in, Vector3 normal,
                                      Vector3 out, float overbounce) {
-        float backoff = in.dot(normal) * overbounce;
+        float backoff = in.dot(normal);
+        if (backoff >= 0) return; // Already moving away or parallel
+        
+        backoff *= overbounce;
         out.set(in).sub(tmp3.set(normal).scl(backoff));
 
         // Kill tiny components to prevent jitter
@@ -262,7 +306,7 @@ public class BSPCollision {
                                TraceResult result) {
         tmp1.set(position).sub(0, 0.25f, 0); // check 0.25 units below
         traceBox(position, tmp1, mins, maxs, result);
-        return result.fraction < 1f && result.normal.y > 0.7f;
+        return (result.fraction < 1f || result.startSolid) && result.normal.y > 0.7f;
     }
 
     // -----------------------------------------------------------------------
@@ -272,8 +316,11 @@ public class BSPCollision {
     private boolean isSolid(BSPFile.Brush brush) {
         if (brush.textureIndex < 0 || brush.textureIndex >= bsp.textures.length) return false;
         BSPFile.Texture tex = bsp.textures[brush.textureIndex];
-        // Solid if content flag has CONTENTS_SOLID
+        
+        // Solid if content flag has CONTENTS_SOLID or clip texture
         return (tex.contentFlags & BSPFile.CONTENTS_SOLID) != 0
             || tex.name.startsWith("textures/common/clip");
     }
+
+    
 }

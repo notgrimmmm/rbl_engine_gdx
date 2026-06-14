@@ -37,6 +37,9 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
     private boolean suppressNextTypedCharacter = false;
     private float backspaceHeldTime = 0f;
     private float backspaceRepeatTimer = 0f;
+    
+    // Add this field alongside your other fields
+    private final java.util.List<String> activeSuggestions = new java.util.ArrayList<>();
 
     public DebuggingConsole(RebelEngineBase engine) {
         uiBatch = new SpriteBatch();
@@ -92,6 +95,24 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
     public void resize(int width, int height) {
         uiViewport.update(width, height, true);
     }
+    
+    private void updateSuggestions() {
+        activeSuggestions.clear();
+        String currentInput = inputBuffer.toString().trim().toLowerCase();
+
+        // Don't show suggestions if nothing has been typed yet
+        if (currentInput.isEmpty()) {
+            return;
+        }
+
+        // Loop through your registry and match names that start with the input
+        // NOTE: Replace commandRegistry.getCommandNames() with whatever method your registry uses to expose command strings
+        for (String commandName : commandRegistry.getCommandNames()) {
+            if (commandName.toLowerCase().startsWith(currentInput)) {
+                activeSuggestions.add(commandName);
+            }
+        }
+    }
 
     @Override
     public boolean keyDown(int keycode) {
@@ -101,10 +122,23 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
             suppressNextTypedCharacter = true;
             backspaceHeldTime = 0f;
             backspaceRepeatTimer = 0f;
+            activeSuggestions.clear(); // Clear when toggled
             return true;
         }
+
         if (!visible) {
             return false;
+        }
+
+        // --- TAB AUTOFILL LOGIC ---
+        if (keycode == Input.Keys.TAB) {
+            if (!activeSuggestions.isEmpty()) {
+                String topMatch = activeSuggestions.get(0);
+                inputBuffer.setLength(0);
+                inputBuffer.append(topMatch).append(" "); // Fill command and add a trailing space for arguments
+                updateSuggestions(); // Re-filter (will now be empty or match args if your registry supports it)
+            }
+            return true;
         }
 
         if (keycode == Input.Keys.BACKSPACE) {
@@ -132,22 +166,64 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
 
         shapeRenderer.setProjectionMatrix(uiViewport.getCamera().combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        // Draw Main Input Background
         shapeRenderer.setColor(0f, 0f, 0f, 0.82f);
+        float mainBoxWidth = Math.max(glyphLayout.width + (TEXT_PADDING_X * 2f), 250f);
+        float mainBoxHeight = glyphLayout.height + TEXT_PADDING_TOP + TEXT_PADDING_BOTTOM;
         shapeRenderer.rect(
             TEXT_X - TEXT_PADDING_X,
             TEXT_Y - glyphLayout.height - TEXT_PADDING_BOTTOM,
-            glyphLayout.width + (TEXT_PADDING_X * 2f),
-            glyphLayout.height + TEXT_PADDING_TOP + TEXT_PADDING_BOTTOM
+            mainBoxWidth,
+            mainBoxHeight
         );
+
+        // --- DRAW SUGGESTIONS BOX IF MATCHES EXIST ---
+        float suggestionYOffset = 24f; 
+        if (!activeSuggestions.isEmpty()) {
+            shapeRenderer.setColor(0.05f, 0.05f, 0.05f, 0.9f); // Slightly darker box for suggestions
+            float lineSpacing = 18f;
+            float suggestionsBoxHeight = (activeSuggestions.size() * lineSpacing) + 8f;
+
+            shapeRenderer.rect(
+                TEXT_X - TEXT_PADDING_X,
+                TEXT_Y - glyphLayout.height - TEXT_PADDING_BOTTOM - suggestionsBoxHeight,
+                mainBoxWidth,
+                suggestionsBoxHeight
+            );
+        }
         shapeRenderer.end();
 
+        // Render Text Elements
         uiBatch.setProjectionMatrix(uiViewport.getCamera().combined);
         uiBatch.begin();
+
+        // 1. Draw main console input text
         uiFont.setColor(Color.WHITE);
         uiFont.draw(uiBatch, debugText, TEXT_X, TEXT_Y);
+
+        // 2. Draw active matching options below input line
+        if (!activeSuggestions.isEmpty()) {
+            float currentY = TEXT_Y - 22f;
+            for (int i = 0; i < activeSuggestions.size(); i++) {
+                String option = activeSuggestions.get(i);
+                if (i == 0) {
+                    uiFont.setColor(Color.GOLD); // Highlight the dominant autofill target
+                    uiFont.draw(uiBatch, "> " + option + " [Tab]", TEXT_X, currentY);
+                } else {
+                    uiFont.setColor(Color.GRAY);
+                    uiFont.draw(uiBatch, "  " + option, TEXT_X, currentY);
+                }
+                currentY -= 18f;
+            }
+            // Push the old execution status message down past our suggestion window
+            suggestionYOffset = 22f + (activeSuggestions.size() * 18f) + 12f;
+        }
+
+        // 3. Draw old command execution feedback status
         if (!debugState.lastCommandStatus.isEmpty()) {
             uiFont.setColor(Color.LIGHT_GRAY);
-            uiFont.draw(uiBatch, debugState.lastCommandStatus, TEXT_X, TEXT_Y - 24f);
+            uiFont.draw(uiBatch, debugState.lastCommandStatus, TEXT_X, TEXT_Y - suggestionYOffset);
         }
         uiBatch.end();
     }
@@ -160,22 +236,18 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
         String command = inputBuffer.toString();
         inputBuffer.setLength(0);
         debugState.lastCommandStatus = commandRegistry.execute(command, debugContext);
+        activeSuggestions.clear(); // <-- Clear here
     }
 
     @Override
     public boolean keyTyped(char character) {
-        if (!visible) {
-            return false;
-        }
-        if (suppressNextTypedCharacter) {
-            suppressNextTypedCharacter = false;
-            return false;
-        }
-        if (character == '\r' || character == '\n' || character == '\b') {
-            return false;
-        }
+        if (!visible) return false;
+        if (suppressNextTypedCharacter) { suppressNextTypedCharacter = false; return false; }
+        if (character == '\r' || character == '\n' || character == '\b' || character == '\t') return false; // Ignore tab here too
+
         if (character >= 32 && character != 127) {
             inputBuffer.append(character);
+            updateSuggestions(); // <-- Update here
             return true;
         }
         return false;
@@ -184,7 +256,12 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
     private void deleteLastCharacter() {
         if (inputBuffer.length() > 0) {
             inputBuffer.deleteCharAt(inputBuffer.length() - 1);
+            updateSuggestions(); // <-- Update here
         }
+    }
+    
+    public boolean get_noclipState(){
+        return debugState.noclip;
     }
 
     @Override
