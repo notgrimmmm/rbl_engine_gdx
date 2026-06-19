@@ -1,7 +1,9 @@
 package io.rebelengine;
 
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import java.util.Set;
 
 /**
  * BSP brush collision — sweeps a capsule/AABB against solid brush planes.
@@ -39,7 +41,9 @@ public class BSPCollision {
         public boolean startSolid = false;
         /** True if entire trace is inside solid */
         public boolean allSolid   = false;
-        
+
+        public Entity hitEntity = null;
+
         public Array<Integer> nonSolidOverlapIndices = new Array<>(false, 4); // collect brush index of non solid to compare later
 
         public void reset() {
@@ -47,6 +51,7 @@ public class BSPCollision {
             normal.set(0, 0, 0);
             startSolid = false;
             allSolid   = false;
+            hitEntity = null;
             
             nonSolidOverlapIndices.clear();
         }
@@ -81,7 +86,7 @@ public class BSPCollision {
         // other models like brush entities are in models *1, *2, etc
         BSPFile.Model world = bsp.models[0]; // unused bc we want to collide with triggers which are not in [0]
         
-        for (int bi = 0; bi < world.numBrushes; bi++) {
+        for (int bi = 0; bi < world.numBrushes; bi++) { // probably change this to all models
 
             BSPFile.Brush brush = bsp.brushes[world.firstBrush + bi];
             // Only test solid brushes
@@ -94,54 +99,62 @@ public class BSPCollision {
     public void traceBox(Vector3 start, Vector3 end,
                         Vector3 mins,  Vector3 maxs,
                         TraceResult result, int skipModelIndex) {
-       result.reset();
+        traceBox(start, end, mins, maxs, result, skipModelIndex, null);
+    }
 
-       // trace against the world geometry (models[0]) first
-       BSPFile.Model world = bsp.models[0];
-       for (int bi = 0; bi < world.numBrushes; bi++) {
-           BSPFile.Brush brush = bsp.brushes[world.firstBrush + bi];
-           if (!isSolid(brush)) continue;
+    public void traceBox(Vector3 start, Vector3 end,
+                        Vector3 mins,  Vector3 maxs,
+                        TraceResult result, int skipModelIndex,
+                        Set<Integer> skipModelIndices) {
+        result.reset();
 
-           traceThroughBrush(brush, start, end, mins, maxs, result);
-           if (result.allSolid) return;
-       }
+        // trace against the world geometry (models[0]) first
+        BSPFile.Model world = bsp.models[0];
+        for (int bi = 0; bi < world.numBrushes; bi++) {
+            BSPFile.Brush brush = bsp.brushes[world.firstBrush + bi];
+            if (!isSolid(brush)) continue;
 
-       // loop through all OTHER sub-models (dynamic entities/triggers)
-       for (int mi = 1; mi < bsp.models.length; mi++) {
-           
-           if (mi == skipModelIndex) continue; 
+            traceThroughBrush(brush, start, end, mins, maxs, result);
+            if (result.allSolid) return;
+        }
 
-           BSPFile.Model subModel = bsp.models[mi];
+        // loop through all OTHER sub-models (dynamic entities/triggers)
+        for (int mi = 1; mi < bsp.models.length; mi++) {
 
-           // Loop ONLY through the brushes that belong to this specific sub-model
-           for (int bi = 0; bi < subModel.numBrushes; bi++) {
-               BSPFile.Brush brush = bsp.brushes[subModel.firstBrush + bi];
-               tmpTraceResult.reset(); // reset temp for overlap
-               
-               if (!isSolid(brush)) {
-                   // Collect trigger zones / items if hit
-                   traceThroughBrush(brush, start, end, mins, maxs, tmpTraceResult);
-                   if (tmpTraceResult.startSolid || tmpTraceResult.fraction < 1.0){
-                       result.nonSolidOverlapIndices.add(mi); // mi is the real submodel index, bi is the index inside that mi brush
-                       return;
-                   }
-                   
-                   continue;
-               }
+            if (mi == skipModelIndex) continue;
+            if (skipModelIndices != null && skipModelIndices.contains(mi)) continue;
 
-               traceThroughBrush(brush, start, end, mins, maxs, result);
-               if (result.allSolid) return;
-           }
-       }
-   }
+            BSPFile.Model subModel = bsp.models[mi];
+
+            // Loop ONLY through the brushes that belong to this specific sub-model
+            for (int bi = 0; bi < subModel.numBrushes; bi++) {
+                BSPFile.Brush brush = bsp.brushes[subModel.firstBrush + bi];
+                tmpTraceResult.reset(); // reset temp for overlap
+
+                if (!isSolid(brush)) {
+                    // Collect trigger zones / items if hit
+                    traceThroughBrush(brush, start, end, mins, maxs, tmpTraceResult);
+                    if (tmpTraceResult.startSolid || tmpTraceResult.fraction < 1.0){
+                        result.nonSolidOverlapIndices.add(mi); // mi is the real submodel index, bi is the index inside that mi brush
+                        return;
+                    }
+
+                    continue;
+                }
+
+                traceThroughBrush(brush, start, end, mins, maxs, result);
+                if (result.allSolid) return;
+            }
+        }
+    }
 
     /**
      * Simplified point trace — no box, just a ray.
      * Useful for line-of-sight checks.
      */
-    public void traceRay(Vector3 start, Vector3 end, TraceResult result) {
+    public void traceRay(Vector3 start, Vector3 end, TraceResult result, int indexModel) {
         Vector3 zero = new Vector3(0, 0, 0);
-        traceBox(start, end, zero, zero, result);
+        traceBox(start, end, zero, zero, result, indexModel);
     }
 
     // -----------------------------------------------------------------------

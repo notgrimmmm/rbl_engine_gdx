@@ -4,6 +4,8 @@
  */
 package io.rebelengine;
 
+import io.game.Interactables.Item;
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
@@ -11,19 +13,25 @@ import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
-import io.game.PlayerScriptTest;
+import io.game.Interactables.Prop;
+import io.game.Scripts.Player_InitiatorTriggeringScript;
+import io.game.Scripts.Player_PropsInteractionScript;
 import io.rebelengine.Commands.InfoBodiesCommand;
 
 import io.rebelengine.Systems.CameraSyncSystem;
-import io.rebelengine.Systems.PlayerFrameInputSystem;
+import io.rebelengine.Systems.FrameInputSystem;
 import io.rebelengine.Systems.PhysicsBodySystem;
-import io.rebelengine.Systems.PlayerLocomotionSystem;
+import io.rebelengine.Systems.LocomotionSystem;
 import io.rebelengine.Systems.TransformInterpolationSystem;
 
 import io.rebelengine.Commands.StatsCommand;
 import io.rebelengine.Commands.NoClipCommand;
+import io.rebelengine.Components.EntityScript;
+import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.ScriptComponent;
+import io.rebelengine.Components.TransformComponent;
 import io.rebelengine.Systems.ScriptingSystem;
 
 import java.io.IOException;
@@ -50,56 +58,58 @@ public class RebelEngineBase implements Disposable{
 
     public BSPCollision BSP_COLLISION;
     public DynamicRenderer DYN_RENDERER;
+    public UIRenderer UI_RENDERER;
 
     public Camera camera;
 
     private final InputMultiplexer inputMultiplexer;
     private final DebuggingConsole debuggingConsole;
     private final EngineFrameInputProcessor frameInputProcessor;
-    private final PlayerFrameInputSystem playerFrameInputSystem;
-    private final PlayerLocomotionSystem playerLocomotionSystem;
+    private final FrameInputSystem FrameInputSystem;
+    private final LocomotionSystem LocomotionSystem;
     private final PhysicsBodySystem physicsBodySystem;
     private final TransformInterpolationSystem transformInterpolationSystem;
     private final CameraSyncSystem cameraSyncSystem;
     private final ScriptingSystem scriptingSystem;
-    
+
     private BasePlayer player_base;
-    
+
     public RebelEngineBase() {
         GameContext gameContext = new GameContext(this);
         gameContext.initialize(gameContext);
-        
+
         this.ASHLEY = new RebelAshleyEngine();
         this.SHADER = new EngineShader();
+        this.UI_RENDERER = new UIRenderer();
         this.debuggingConsole = new DebuggingConsole(this);
-        
+
         this.inputMultiplexer = new InputMultiplexer();
         this.frameInputProcessor = new EngineFrameInputProcessor(ASHLEY);
-        
-        this.playerFrameInputSystem = new PlayerFrameInputSystem();
-        this.playerLocomotionSystem = new PlayerLocomotionSystem();
-        
+
+        this.FrameInputSystem = new FrameInputSystem();
+        this.LocomotionSystem = new LocomotionSystem();
+
         this.physicsBodySystem = new PhysicsBodySystem();
         this.transformInterpolationSystem = new TransformInterpolationSystem();
         this.cameraSyncSystem = new CameraSyncSystem();
         this.scriptingSystem = new ScriptingSystem();
-        
-        ASHLEY.addSystem(playerFrameInputSystem);
-        ASHLEY.addSystem(playerLocomotionSystem);
+
+        ASHLEY.addSystem(FrameInputSystem);
+        ASHLEY.addSystem(LocomotionSystem);
         ASHLEY.addSystem(physicsBodySystem);
         ASHLEY.addSystem(transformInterpolationSystem);
         ASHLEY.addSystem(cameraSyncSystem);
         ASHLEY.addSystem(scriptingSystem);
-        
-        
-        
+
+
+
         /**
          * Register all debugging commands
          */
         debuggingConsole.registerCommand(new StatsCommand());
         debuggingConsole.registerCommand(new NoClipCommand());
         debuggingConsole.registerCommand(new InfoBodiesCommand());
-        
+
         inputMultiplexer.addProcessor(debuggingConsole);
         inputMultiplexer.addProcessor(frameInputProcessor);
 
@@ -110,7 +120,7 @@ public class RebelEngineBase implements Disposable{
         camera.far  = 4096f;
         camera.update();
     }
-    
+
     /**
      * Load a BSP map and initialize all BSP systems
      * Call this from show() in game screen
@@ -125,19 +135,19 @@ public class RebelEngineBase implements Disposable{
             ByteBuffer buf = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
             BSP = BSPLoader.load(buf);
             LightGridManager.init(BSP); // control light grid ambient
-            
+
             System.out.println("Lightmaps: " + BSP.lightmaps.length);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load BSP: " + mapPath + " — " + e);
         }
- 
+
         BSP_TREE     = new BSPTree(BSP);
         BSP_RENDERER = new BSPRenderer(BSP, SHADER);
         BSP_RENDERER.buildGeometry(textureRoot);
         DYN_RENDERER = new DynamicRenderer(SHADER, textureRoot);
         BSP_COLLISION = new BSPCollision(BSP);
-        
- 
+
+
         BSPEntities parsedEntities = BSPEntityParser.parse(BSP.entities);
 
         BSPEntities.Entity debugEnt = parsedEntities.first("debug");
@@ -151,12 +161,13 @@ public class RebelEngineBase implements Disposable{
             Vector3 ppos = Utilities.parseVector3(playerEnt.get("origin"));
 
             player_base = new BasePlayer(ppos);
-            
+
             ScriptComponent sc = new ScriptComponent()
-                    .add(new PlayerScriptTest(player_base.getEntity()));
-            
+                    .add(new Player_InitiatorTriggeringScript(player_base.getEntity()))
+                    .add(new Player_PropsInteractionScript(player_base.getEntity()));
+
             player_base.getEntity().add(sc);
-            
+
             ASHLEY.addEntity(player_base.getEntity());
             setCamera(player_base.getCamera());
 
@@ -165,15 +176,15 @@ public class RebelEngineBase implements Disposable{
             // cameras) can call InputFocus.set(...) to take it later.
             player_base.focus();
         }
-        
-        // function brush items, things like doors ? and rocks etc
-        // they should NOT have any brushes for interaction, physics component and system will do the work
+
+        // function brush items, things like doors
+        // they should NOT have any brushes for interaction, physics component and system scripting will do the work
         List<BSPEntities.Entity> func_system_list = parsedEntities.byClass.get("func_item");
         if (func_system_list != null) {
             for (BSPEntities.Entity funcEnt : func_system_list){
                 String brushModelKey = funcEnt.get("model");
                 int bmIndex = Integer.parseInt(brushModelKey.substring(1));
-                
+
                 BSPFile.Model bModel = BSP.models[bmIndex];
                 //System.out.println(bModel + " - " + bModel.firstFace);
                 DYN_RENDERER.addBrush(brushModelKey, bModel, BSP);
@@ -182,37 +193,144 @@ public class RebelEngineBase implements Disposable{
                 inst.meshKey = brushModelKey;
                 inst.bmIndex = bmIndex;
                 inst.position.set(DynamicRenderer.getModelCenter(bModel));
-                
-                Func_Item fi = new Func_Item(inst, bModel, inst.position);
-                ASHLEY.addEntity(fi);
+
+                Item item = new Item(inst, bModel, inst.position);
+                ASHLEY.addEntity(item);
                 DYN_RENDERER.instances.add(inst);
             }
         }
-        
-        List<BSPEntities.Entity> trigger_list = parsedEntities.byClass.get("trigger_ent");
+
+        List<BSPEntities.Entity> physics_prop_list = parsedEntities.byClass.get("physics_prop");
+        if (physics_prop_list != null){
+            for (BSPEntities.Entity physics_prop : physics_prop_list){
+                DynamicRenderer.RenderInstance instance = Utilities.createRenderInstance(physics_prop.get("model"), DYN_RENDERER, BSP);
+                BSPFile.Model bModel = BSP.models[instance.bmIndex];
+                Prop prop = new Prop(instance, bModel, instance.position);
+                
+                ASHLEY.addEntity(prop);
+                DYN_RENDERER.instances.add(instance);
+            }
+        }
+
+        List<BSPEntities.Entity> trigger_list = parsedEntities.byClass.get("trigger_ent"); // brush entity
         if (trigger_list != null){
             for (BSPEntities.Entity trigger_ent : trigger_list){
                 // code here
                 String brushModelIndex = trigger_ent.get("model");
                 int bmIndex = Integer.parseInt(brushModelIndex.substring(1));
 
-                Info_Entity.Trigger t = new Info_Entity.Trigger();
-                GameContext.get().add_trigger(bmIndex, t);
-            }
-        }
-        
-        List<BSPEntities.Entity> scriptor_list = parsedEntities.byClass.get("scriptor");
-        if (trigger_list != null){
-            for (BSPEntities.Entity scriptor : scriptor_list){
-                // code here
-                System.out.println(scriptor.properties);
-                if (scriptor.properties.get("target") != null){
-                    // do thing
+                Info_Entity.Trigger trigger = new Info_Entity.Trigger();
+                GameContext.get().add_trigger(bmIndex, trigger);
+
+                if (trigger_ent.get("targetname") != null){
+                    String group_tag = trigger_ent.get("targetname");
+                    GameContext.get().add_groupComponent(group_tag, trigger);
+                    trigger.group_tag = group_tag;
+                }
+
+                if (trigger_ent.get("target") != null){ // not used for anything right now...
+                    String target_tag = trigger_ent.get("target");
+                    trigger.target_tag = target_tag;
                 }
             }
         }
+
+        List<BSPEntities.Entity> locations_list = parsedEntities.byClass.get("info_location"); // point entity
+        if (locations_list != null){
+            for (BSPEntities.Entity info_location : locations_list){
+                Info_Entity.Location location = new Info_Entity.Location();
+                location.vec = Utilities.parseVector3(info_location.get("origin"));
+
+                String group_tag = info_location.get("targetname");
+                GameContext.get().add_groupComponent(group_tag, location);
+            }
+        }
+
+        List<BSPEntities.Entity> facing_points_list = parsedEntities.byClass.get("facing_point"); // point entity
+        if (facing_points_list != null){
+            for (BSPEntities.Entity facing_point : facing_points_list){
+                Info_Entity.FacingPoint facingPoint = new Info_Entity.FacingPoint();
+                facingPoint.point = Utilities.parseVector3(facing_point.get("origin"));
+
+                String group_tag = facing_point.get("targetname");
+                GameContext.get().add_groupComponent(group_tag, facingPoint);
+            }
+        }
+
+        List<BSPEntities.Entity> txt_interaction_list = parsedEntities.byClass.get("text_interaction"); // point entity
+        if (txt_interaction_list != null){
+            for (BSPEntities.Entity txt_interaction : txt_interaction_list){
+                UI_TextInteraction txt = new UI_TextInteraction();
+                txt.text = txt_interaction.get("text");
+                txt.position = Utilities.parseVector3(txt_interaction.get("origin"));
+                if (txt_interaction.get("visible") != null){
+                    txt.visible = txt_interaction.get("visible").equalsIgnoreCase("true");
+                }
+
+                GameContext.get().add_text_UI(txt); // for rendering
+
+                if (txt_interaction.get("targetname") !=  null){
+                    GameContext.get().add_groupComponent(txt_interaction.get("targetname"), txt); // for lookup
+                }
+            }
+        }
+
+        List<BSPEntities.Entity> scriptor_list = parsedEntities.byClass.get("scriptor");
+        if (scriptor_list != null){
+            for (BSPEntities.Entity scriptor : scriptor_list){
+
+                Array<Object> group_components = new Array<>();
+                String group = "";
+                if (scriptor.get("target") != null){
+                    group = scriptor.get("target");
+                    group_components = GameContext.get().get_groupComponentsArray(group);
+                }
+
+                if (scriptor.get("class") == null){ // no class no script
+                    System.err.println(scriptor + " No class property in scriptor, can't create script.");
+                    continue;
+                }
+
+                String name = scriptor.get("class");
+                try {
+                    String fullPath = "io.game.Scripts." + name;
+                    Class<? extends EntityScript> clazz = Class.forName(fullPath).asSubclass(EntityScript.class);
+                    EntityScript script = clazz.getDeclaredConstructor().newInstance();
+                    script.set_components(group_components);
+
+                    // finally add to ecs ONLY if there is an Ashley Entity in the group components
+                    // only reason we would probably want this is for initiators like enemies etc.
+                    // otherwise script is not added to the ecs run meaning its not constanly executing on update_fixed, and only called
+                    for (Object component : group_components){
+                        if (component instanceof Entity compEntity){
+                            if (compEntity.getComponent(ScriptComponent.class) == null){
+
+                                ScriptComponent sc = new ScriptComponent();
+                                sc.add(script);
+                                compEntity.add(sc);
+
+                            }else{
+
+                                compEntity.getComponent(ScriptComponent.class).add(script);
+                            }
+
+                            break; // return out of the component loop safely
+                        }
+                    }
+
+                    GameContext.get().add_script(group, script); // add to game context for look up
+                    System.out.println("Instantiated script file : " + script);
+
+                } catch (ClassNotFoundException e) {
+                    System.err.println("NOT FOUND " + e);
+                } catch (Exception e){
+                    System.err.println("ERROR " + e);
+                }
+
+            }
+        }
     }
-    
+
     public void render(float delta){
         if (BSP_RENDERER == null || camera == null) return;
 
@@ -221,32 +339,32 @@ public class RebelEngineBase implements Disposable{
         // Input focus is the single source of truth. Locking it globally
         // silences the player, the mouse-look, and any future system that
         // consults InputFocus.is(...). Console-open and noclip both lock.
-        InputFocus.setLocked(debuggingConsole.isVisible() || debuggingConsole.get_noclipState()); // maybe we dont need this ? 
+        InputFocus.setLocked(debuggingConsole.isVisible() || debuggingConsole.get_noclipState()); // maybe we dont need this ?
 
         ASHLEY.updateFrame();
         float alpha = stepSimulation(delta);
         ASHLEY.updateRender(alpha);
         camera.update();
-        
+
         // Convert GL camera position to Q3 coords for PVS lookup
         // GL(x, y, z) -> Q3(x, -z, y)
         float q3x =  camera.position.x;
         float q3y = -camera.position.z;
         float q3z =  camera.position.y;
-        
+
         SHADER.clearLights();
         //SHADER.addSpotLight(camera.position, 500f, camera.direction, Color.WHITE, 30f);
         SHADER.bind();
-        
+
         BSP_RENDERER.render(camera, q3x, q3y, q3z);
         DYN_RENDERER.render(camera); //already contains instances added
-        debuggingConsole.render();
-        
-        
+        UI_RENDERER.render(camera);
+
+        debuggingConsole.render(); // do this last
     }
-    
+
     /**
-     * 
+     *
      * @param delta - use for lights and animations
      *        alpha - use for interpolating physics
      *   fixed_step - use for any physcis movement
@@ -266,7 +384,7 @@ public class RebelEngineBase implements Disposable{
         }
         return alpha;
     }
-    
+
     /**
     * Call when the viewport changes (window resize).
     */
@@ -277,7 +395,7 @@ public class RebelEngineBase implements Disposable{
         camera.update();
         debuggingConsole.resize(width, height);
     }
-    
+
     public void setCamera(Camera cam){
         if (cam == null || cam == player_base.getCamera()){
             this.camera = player_base.getCamera();
@@ -310,7 +428,7 @@ public class RebelEngineBase implements Disposable{
     public InputProcessor getInputProcessor() {
         return inputMultiplexer;
     }
-    
+
     @Override
     public void dispose() {
         if (BSP_RENDERER != null)   BSP_RENDERER.dispose();

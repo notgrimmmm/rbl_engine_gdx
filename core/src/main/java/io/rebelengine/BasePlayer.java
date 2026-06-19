@@ -4,11 +4,12 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.math.Vector3;
+import io.game.Behaviors.Input_PlayerMoveBehavior;
+import io.game.Behaviors.Locomotion_PlayerMove;
 import io.rebelengine.Components.CameraComponent;
 import io.rebelengine.Components.InputControlComponent;
 import io.rebelengine.Components.MouseLookComponent;
 import io.rebelengine.Components.PhysicsBodyComponent;
-import io.rebelengine.Components.PlayerInputComponent;
 import io.rebelengine.Components.TransformComponent;
 
 public class BasePlayer {
@@ -30,7 +31,11 @@ public class BasePlayer {
         transform.currentPosition.set(spawnPosition);
         transform.renderPosition.set(spawnPosition);
 
-        PlayerInputComponent input = new PlayerInputComponent();
+        InputControlComponent input = new InputControlComponent();
+        input.inputBehavior = new Input_PlayerMoveBehavior();
+        input.locomotionBehavior = new Locomotion_PlayerMove();
+        input.priority = 100;
+        
         MouseLookComponent mouseLook = new MouseLookComponent();
 
         PhysicsBodyComponent physics = new PhysicsBodyComponent();
@@ -48,15 +53,11 @@ public class BasePlayer {
         CameraComponent cameraComponent = new CameraComponent();
         cameraComponent.camera = camera;
 
-        InputControlComponent control = new InputControlComponent();
-        control.priority = 100; // players win focus arbitration over vehicles/spectators
-
         entity.add(transform);
         entity.add(input);
         entity.add(mouseLook);
         entity.add(physics);
         entity.add(cameraComponent);
-        entity.add(control);
         camera.update();
     }
 

@@ -15,6 +15,7 @@ public class PhysicsBodyComponent implements Component {
     public float jumpSpeed = 170f;
     public float gravity = 800f;
     public float terminalVelocity = -1500f;
+    public float frictionCoeff = 0f;
     public float stepHeight = 18f;
     public float eyeStand = 48f;
     public float eyeCrouch = 20f;

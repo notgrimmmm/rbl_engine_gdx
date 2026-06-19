@@ -94,10 +94,46 @@ public class CollisionUtils {
                 start.z >= eMinZ && start.z <= eMaxZ) {
                 result.startSolid = true;
                 result.fraction = 0;
+                setPenetrationNormal(start, eMinX, eMinY, eMinZ, eMaxX, eMaxY, eMaxZ, result.normal);
             } else {
                 result.fraction = Math.max(0, tMin);
                 result.normal.set(hitNormal);
             }
+        }
+    }
+
+    private static void setPenetrationNormal(Vector3 point,
+                                             float minX, float minY, float minZ,
+                                             float maxX, float maxY, float maxZ,
+                                             Vector3 normal) {
+        float left = point.x - minX;
+        float right = maxX - point.x;
+        float bottom = point.y - minY;
+        float top = maxY - point.y;
+        float back = point.z - minZ;
+        float front = maxZ - point.z;
+
+        float min = left;
+        normal.set(-1f, 0f, 0f);
+
+        if (right < min) {
+            min = right;
+            normal.set(1f, 0f, 0f);
+        }
+        if (bottom < min) {
+            min = bottom;
+            normal.set(0f, -1f, 0f);
+        }
+        if (top < min) {
+            min = top;
+            normal.set(0f, 1f, 0f);
+        }
+        if (back < min) {
+            min = back;
+            normal.set(0f, 0f, -1f);
+        }
+        if (front < min) {
+            normal.set(0f, 0f, 1f);
         }
     }
 }

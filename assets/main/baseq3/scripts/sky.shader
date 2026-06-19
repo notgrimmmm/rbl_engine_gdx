@@ -4,5 +4,5 @@ textures/sky/sky
 	surfaceparm noimpact
 	surfaceparm nolightmap
 	
-	q3map_sun 0.3 0.3 0.3 15 360 80
+	q3map_sun 0.3 0.3 0.3 35 360 80
 }

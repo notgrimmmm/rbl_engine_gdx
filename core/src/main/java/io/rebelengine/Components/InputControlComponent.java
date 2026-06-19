@@ -17,5 +17,19 @@ public class InputControlComponent implements Component {
      * Optional priority for focus resolution. When the engine wants to
      * auto-pick a focus target (e.g. on startup), higher wins. Defaults to 0.
      */
+    public InputBehavior inputBehavior;
+    public LocomotionBehavior locomotionBehavior;
     public int priority = 0;
+    
+    
+    // input types
+    public float Forward; // positive negative
+    public float Right; // positive negative
+    
+    public float Up; // positive negative
+    
+    public boolean CrouchHeld;
+    public boolean JumpQueued;
+    
+    
 }

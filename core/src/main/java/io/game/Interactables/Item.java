@@ -2,19 +2,21 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package io.rebelengine;
+package io.game.Interactables;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector3;
+import io.rebelengine.BSPFile;
 import io.rebelengine.Components.InstanceComponent;
 import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.TransformComponent;
+import io.rebelengine.DynamicRenderer;
 
 /**
  *
  */
-public class Func_Item extends Entity{
-    public Func_Item(DynamicRenderer.RenderInstance instance, BSPFile.Model model, Vector3 origin){
+public class Item extends Entity{
+    public Item(DynamicRenderer.RenderInstance instance, BSPFile.Model model, Vector3 origin){
         
         InstanceComponent instanceComponent = new InstanceComponent();
         instanceComponent.instance = instance;

@@ -8,14 +8,20 @@ import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.Vector3;
 import io.rebelengine.BSPCollision;
 import io.rebelengine.CollisionUtils;
-import io.rebelengine.Components.InstanceComponent;
 import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.TransformComponent;
 import io.rebelengine.GameContext;
 import io.rebelengine.RebelAshleyEngine;
 import io.rebelengine.SpatialHash;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine.FixedUpdatable {
+    private static final float STEP_EPSILON = 0.03125f;
+    private static final float STEP_MIN_RISE = 0.1f;
+    private static final float STEP_PROGRESS_EPSILON = 0.01f;
+    private static final int OVERLAP_RECOVERY_STEPS = 3;
+
     private static final Family FAMILY = Family.all(
         TransformComponent.class,
         PhysicsBodyComponent.class
@@ -23,6 +29,7 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
 
     private ImmutableArray<Entity> entities;
     private final SpatialHash spatialHash = new SpatialHash(128f);
+    private final Set<Integer> dynamicModelIndices = new HashSet<>();
 
     @Override
     public void addedToEngine(Engine engine) {
@@ -32,7 +39,12 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
     @Override
     public void fixedUpdate(float fixedDt) {
         spatialHash.clear();
+        dynamicModelIndices.clear();
         for (Entity entity : entities) {
+            PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
+            if (body.bspModelIndexReference > 0) {
+                dynamicModelIndices.add(body.bspModelIndexReference);
+            }
             spatialHash.insert(entity);
         }
 
@@ -41,7 +53,18 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
             PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
 
             transform.previousPosition.set(transform.currentPosition);
+            transform.previousYaw = transform.currentYaw;
+            transform.previousPitch = transform.currentPitch;
+
             updateCrouchState(entity, transform, body);
+            
+            if (body.grounded){
+                body.velocity.x -= body.velocity.x * body.frictionCoeff * fixedDt;
+                body.velocity.z -= body.velocity.z * body.frictionCoeff * fixedDt;
+                
+                if (Math.abs(body.velocity.x) < 0.1f) body.velocity.x = 0f;
+                if (Math.abs(body.velocity.z) < 0.1f) body.velocity.z = 0f;
+            }
 
             if (body.jumpRequested && body.grounded) {
                 body.velocity.y = body.jumpSpeed;
@@ -61,12 +84,6 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
             } else {
                 moveAndCollide(entity, transform, body, fixedDt);
             }
-            
-            // TODO: probably some interpolation, put this before and after phsycis movement ? 
-            if (entity.getComponent(InstanceComponent.class) != null){
-                InstanceComponent instance = entity.getComponent(InstanceComponent.class);
-                instance.instance.position.set(transform.currentPosition);
-            }
         }
     }
 
@@ -76,24 +93,23 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
         }
 
         float heightDiff = body.maxsStand.y - body.maxsCrouch.y;
-        if (body.wantsCrouch) {
-            transform.currentPosition.y -= heightDiff;
-            body.crouching = true;
-            return;
-        }
+        boolean targetCrouch = body.wantsCrouch;
+        Vector3 targetMins = targetCrouch ? body.minsCrouch : body.minsStand;
+        Vector3 targetMaxs = targetCrouch ? body.maxsCrouch : body.maxsStand;
+        float originOffset = targetCrouch ? -heightDiff : heightDiff;
 
         if (GameContext.get().COLLISION() == null) {
-            transform.currentPosition.y += heightDiff;
-            body.crouching = false;
+            transform.currentPosition.y += originOffset;
+            body.crouching = targetCrouch;
             return;
         }
 
-        body.savedPosition.set(transform.currentPosition).add(0f, heightDiff, 0f);
+        body.savedPosition.set(transform.currentPosition).add(0f, originOffset, 0f);
         body.traceResult.reset();
-        traceBox(entity, transform.currentPosition, body.savedPosition, body.minsStand, body.maxsStand, body.traceResult);
+        traceBox(entity, body.savedPosition, body.savedPosition, targetMins, targetMaxs, body.traceResult);
         if (!body.traceResult.startSolid && !body.traceResult.allSolid) {
-            transform.currentPosition.y += heightDiff;
-            body.crouching = false;
+            transform.currentPosition.set(body.savedPosition);
+            body.crouching = targetCrouch;
         }
     }
 
@@ -113,31 +129,39 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
         }
     }
 
-    private void traceBox(Entity owner, Vector3 start, Vector3 end, Vector3 mins, Vector3 maxs, BSPCollision.TraceResult result) {
+    public void traceBox(Entity owner, Vector3 start, Vector3 end, Vector3 mins, Vector3 maxs, BSPCollision.TraceResult result) {
         
         int instanceModelIndex = owner.getComponent(PhysicsBodyComponent.class).bspModelIndexReference;
-        GameContext.get().COLLISION().traceBox(start, end, mins, maxs, result, instanceModelIndex);
+        GameContext.get().COLLISION().traceBox(start, end, mins, maxs, result, instanceModelIndex, dynamicModelIndices);
         
         java.util.Set<Entity> nearby = spatialHash.query(start, end, mins, maxs);
         for (Entity other : nearby) {
             if (other == owner) continue;
+            float previousFraction = result.fraction;
             
             TransformComponent tOther = other.getComponent(TransformComponent.class);
             PhysicsBodyComponent pOther = other.getComponent(PhysicsBodyComponent.class);
+            if (pOther.noclip) continue;
+
             Vector3 mOther = pOther.crouching ? pOther.minsCrouch : pOther.minsStand;
             Vector3 xOther = pOther.crouching ? pOther.maxsCrouch : pOther.maxsStand;
-            
+
             CollisionUtils.sweepAABB(start, end, mins, maxs, tOther.currentPosition, mOther, xOther, result);
+
+            if (result.fraction < previousFraction) {
+                result.hitEntity = other;
+            }
         }
     }
 
-    private void slideMove(Entity entity, Vector3 position, Vector3 velocity, Vector3 mins, Vector3 maxs, float fixedDt) {
+    private boolean slideMove(Entity entity, Vector3 position, Vector3 velocity, Vector3 mins, Vector3 maxs, float fixedDt) {
         float timeLeft = fixedDt;
         Vector3 end = new Vector3();
         BSPCollision.TraceResult tr = new BSPCollision.TraceResult();
         Vector3[] planes = new Vector3[4];
         for(int i=0; i<4; i++) planes[i] = new Vector3();
         int numPlanes = 0;
+        boolean blocked = false;
 
         for (int bump = 0; bump < 4 && timeLeft > 0; bump++) {
             end.set(position).add(velocity.x * timeLeft, velocity.y * timeLeft, velocity.z * timeLeft);
@@ -145,6 +169,10 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
             traceBox(entity, position, end, mins, maxs, tr);
 
             if (tr.startSolid) {
+                blocked = true;
+                if (recoverFromOverlap(entity, position, mins, maxs, tr)) {
+                    continue;
+                }
                 BSPCollision.clipVelocity(velocity, tr.normal, velocity, 1.0f);
                 continue;
             }
@@ -154,6 +182,7 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
             }
 
             if (tr.fraction == 1f) break;
+            blocked = true;
 
             timeLeft -= timeLeft * tr.fraction;
 
@@ -166,6 +195,7 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
                 BSPCollision.clipVelocity(velocity, planes[i], velocity, 1.01f);
             }
         }
+        return blocked;
     }
 
     private boolean isOnGround(Entity entity, Vector3 position, Vector3 mins, Vector3 maxs, BSPCollision.TraceResult result) {
@@ -180,27 +210,74 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
         body.savedPosition.set(position);
         body.savedVelocity.set(velocity);
 
-        slideMove(entity, position, velocity, mins, maxs, fixedDt);
-        if (position.dst2(body.savedPosition) > 0.01f) {
+        boolean normalBlocked = slideMove(entity, position, velocity, mins, maxs, fixedDt);
+        float normalProgress = horizontalDistance2(body.savedPosition, position);
+        float intendedProgress = horizontalDistance2(0f, 0f, body.savedVelocity.x * fixedDt, body.savedVelocity.z * fixedDt);
+        if (!normalBlocked || intendedProgress <= STEP_PROGRESS_EPSILON) {
             return;
         }
 
         body.stepPosition.set(body.savedPosition).add(0f, stepHeight, 0f);
         body.traceResult.reset();
         traceBox(entity, body.savedPosition, body.stepPosition, mins, maxs, body.traceResult);
-        if (body.traceResult.fraction <= 0f) {
+        if (body.traceResult.startSolid || body.traceResult.fraction < 1f) {
             return;
         }
 
-        position.set(body.savedPosition).add(0f, stepHeight * body.traceResult.fraction, 0f);
+        position.set(body.stepPosition);
         velocity.set(body.savedVelocity);
         slideMove(entity, position, velocity, mins, maxs, fixedDt);
+        if (horizontalDistance2(body.savedPosition, position) <= normalProgress + STEP_PROGRESS_EPSILON) {
+            position.set(body.savedPosition);
+            velocity.set(body.savedVelocity);
+            slideMove(entity, position, velocity, mins, maxs, fixedDt);
+            return;
+        }
 
         body.downPosition.set(position).sub(0f, stepHeight, 0f);
         body.traceResult.reset();
         traceBox(entity, position, body.downPosition, mins, maxs, body.traceResult);
-        if (body.traceResult.fraction < 1f) {
-            position.lerp(body.downPosition, body.traceResult.fraction);
+        if (body.traceResult.fraction < 1f && body.traceResult.normal.y > 0.7f) {
+            float landingY = position.y + (body.downPosition.y - position.y) * body.traceResult.fraction;
+            float rise = landingY - body.savedPosition.y;
+            if (rise >= STEP_MIN_RISE && rise <= stepHeight + STEP_EPSILON) {
+                position.lerp(body.downPosition, body.traceResult.fraction);
+                return;
+            }
         }
+
+        position.set(body.savedPosition);
+        velocity.set(body.savedVelocity);
+        slideMove(entity, position, velocity, mins, maxs, fixedDt);
+    }
+
+    private boolean recoverFromOverlap(Entity entity, Vector3 position, Vector3 mins, Vector3 maxs,
+                                       BSPCollision.TraceResult trace) {
+        if (trace.hitEntity == null || trace.normal.isZero()) {
+            return false;
+        }
+
+        for (int i = 0; i < OVERLAP_RECOVERY_STEPS; i++) {
+            position.mulAdd(trace.normal, STEP_EPSILON);
+            trace.reset();
+            traceBox(entity, position, position, mins, maxs, trace);
+            if (!trace.startSolid && !trace.allSolid) {
+                return true;
+            }
+            if (trace.hitEntity == null || trace.normal.isZero()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private float horizontalDistance2(Vector3 from, Vector3 to) {
+        return horizontalDistance2(from.x, from.z, to.x, to.z);
+    }
+
+    private float horizontalDistance2(float fromX, float fromZ, float toX, float toZ) {
+        float dx = toX - fromX;
+        float dz = toZ - fromZ;
+        return dx * dx + dz * dz;
     }
 }

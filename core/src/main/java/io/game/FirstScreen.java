@@ -8,7 +8,7 @@ import io.rebelengine.RebelEngineBase;
 
 public class FirstScreen implements Screen {
 
-    private static final String MAP_PATH     = "main/ant.bsp";
+    private static final String MAP_PATH     = "main/zoo.bsp"; // change bsp
     private static final String TEXTURE_ROOT = "main/baseq3";
 
     private final RebelEngineBase ENGINE;

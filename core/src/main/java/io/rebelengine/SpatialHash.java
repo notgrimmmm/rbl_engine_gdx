@@ -35,7 +35,10 @@ public class SpatialHash {
     public void insert(Entity entity) {
         TransformComponent transform = entity.getComponent(TransformComponent.class);
         PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
-        
+        if (body.noclip) {
+            return;
+        }
+
         Vector3 mins = body.crouching ? body.minsCrouch : body.minsStand;
         Vector3 maxs = body.crouching ? body.maxsCrouch : body.maxsStand;
 

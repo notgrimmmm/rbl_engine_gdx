@@ -32,13 +32,13 @@ public class ScriptingSystem extends EntitySystem implements RebelAshleyEngine.F
     @Override
     public void fixedUpdate(float fixedDt) {
         for (Entity entity : entities){
-            // bitwise and check
+            // if the entity does NOT have the INITIATOR flag skip
             if ((entity.flags & EntityFlags.INITIATOR) == 0) continue;
             
             ScriptComponent scriptComp = entity.getComponent(ScriptComponent.class);
             
             for (EntityScript behavior : scriptComp.behaviors){
-                behavior.execute();
+                behavior.update_fixed();
             }
         }
     }

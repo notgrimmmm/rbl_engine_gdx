@@ -2,11 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package io.game;
+package io.rebelengine.Components;
+
+import com.badlogic.ashley.core.Entity;
 
 /**
  *
  */
-public class TwoWayLadderScript {
-    
+public interface LocomotionBehavior {
+    void fixedUpdate(Entity entity);
 }

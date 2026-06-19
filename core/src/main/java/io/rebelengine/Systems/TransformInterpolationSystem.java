@@ -5,6 +5,8 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntitySystem;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
+import com.badlogic.gdx.math.MathUtils;
+import io.rebelengine.Components.InstanceComponent;
 import io.rebelengine.RebelAshleyEngine;
 import io.rebelengine.Components.TransformComponent;
 
@@ -22,8 +24,19 @@ public class TransformInterpolationSystem extends EntitySystem implements RebelA
         for (Entity entity : entities) {
             TransformComponent transform = entity.getComponent(TransformComponent.class);
             transform.renderPosition.set(transform.previousPosition).lerp(transform.currentPosition, alpha);
-            transform.renderYaw = transform.currentYaw;
-            transform.renderPitch = transform.currentPitch;
+            
+            float yawSmooth = MathUtils.lerp(transform.previousYaw, transform.currentYaw, alpha);
+            transform.renderYaw = yawSmooth;
+            
+            float pitchSmooth = MathUtils.lerp(transform.previousPitch, transform.currentPitch, alpha);
+            transform.renderPitch = pitchSmooth;
+
+            InstanceComponent instanceComp = entity.getComponent(InstanceComponent.class);
+            if (instanceComp != null && instanceComp.instance != null) {
+                instanceComp.instance.position.set(transform.renderPosition);
+                // GDX uses Y for Yaw, X for Pitch in standard 3D rotation order
+                instanceComp.instance.rotation.set(transform.renderPitch, transform.renderYaw, 0f);
+            }
         }
     }
 }

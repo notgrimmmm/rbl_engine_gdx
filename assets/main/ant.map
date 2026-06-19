@@ -612,6 +612,7 @@
 "classname" "scriptor"
 "origin" "1432 -40 104"
 "target" "trig_ldr_bgnSwr"
+"class" "TwoWayLadderScript"
 }
 // entity 5
 {

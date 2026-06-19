@@ -4,9 +4,15 @@
  */
 package io.rebelengine.Components;
 
+import com.badlogic.gdx.utils.Array;
+
 /**
  *
  */
 public interface EntityScript {
-    void execute();
+    final Array<Object> group_components = new Array<>();
+    void set_components(Array<Object> components);
+    void update_fixed();
+    void execute(Object parameter);
+    void execute_off();
 }
