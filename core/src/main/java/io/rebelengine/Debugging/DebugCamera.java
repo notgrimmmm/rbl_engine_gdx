@@ -1,4 +1,4 @@
-package io.rebelengine;
+package io.rebelengine.Debugging;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;

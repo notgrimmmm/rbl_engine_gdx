@@ -1,8 +1,9 @@
-package io.rebelengine;
+package io.rebelengine.Helpers;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import io.rebelengine.BSPFile;
 
 public class LightGridManager {
 

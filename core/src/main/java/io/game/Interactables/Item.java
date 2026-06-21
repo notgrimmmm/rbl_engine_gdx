@@ -10,13 +10,13 @@ import io.rebelengine.BSPFile;
 import io.rebelengine.Components.InstanceComponent;
 import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.TransformComponent;
-import io.rebelengine.DynamicRenderer;
+import io.rebelengine.DYNRenderer;
 
 /**
  *
  */
 public class Item extends Entity{
-    public Item(DynamicRenderer.RenderInstance instance, BSPFile.Model model, Vector3 origin){
+    public Item(DYNRenderer.RenderInstance instance, BSPFile.Model model, Vector3 origin){
         
         InstanceComponent instanceComponent = new InstanceComponent();
         instanceComponent.instance = instance;

@@ -1,104 +1,100 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package io.game.Scripts;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.IntMap;
 import io.rebelengine.Components.EntityScript;
 import io.rebelengine.Components.PhysicsBodyComponent;
-import io.rebelengine.GameContext;
-import io.rebelengine.Info_Entity;
+import io.rebelengine.EngineContext;
+import io.rebelengine.Helpers.Info_Entity;
 
-/**
- *
- */
-public class Player_InitiatorTriggeringScript implements EntityScript{
+public class Player_InitiatorTriggeringScript implements EntityScript {
     private final Entity owner;
     private PhysicsBodyComponent body;
     
-    public Player_InitiatorTriggeringScript(Entity owner){
+    // Key: Trigger BSP Index (e.g., 3, 5) | Value: Running script instance
+    public final IntMap<EntityScript> activeScripts = new IntMap<>();
+    
+    // A temporary scratch array used to safely queue keys for removal while iterating
+    private final Array<Integer> removalScratch = new Array<>();
+
+    public Player_InitiatorTriggeringScript(Entity owner) {
         this.owner = owner;
     }
-    
 
-    // Parallel tracking array initialized with the same capacity (ordered=false, capacity=4)
-    // This should live at the class level of this script/component so it persists across frames.
-    public final Array<EntityScript> activeScripts = new Array<>(false, 4);
     @Override
     public void update_fixed() {
         body = owner.getComponent(PhysicsBodyComponent.class);
-        Array<Integer> overlaps = body.traceResult.nonSolidOverlapIndices;
+        Array<Integer> currentOverlaps = body.traceResult.nonSolidOverlapIndices;
 
-        int maxIterations = Math.max(overlaps.size, activeScripts.size);
-
-        for (int i = 0; i < maxIterations; i++) {
-            Integer triggerInt = (i < overlaps.size) ? overlaps.get(i) : null;
-            EntityScript activeScript = (i < activeScripts.size) ? activeScripts.get(i) : null;
-
-            // CASE 1: Trigger exited
-            if (triggerInt == null) {
-                if (activeScript != null) {
-                    activeScript.execute_off();
-                    activeScripts.set(i, null);
-                }
-                continue; 
-            }
-
-            int index = triggerInt; 
-            Info_Entity.Trigger trigger = GameContext.get().get_trigger(index);
-
-            if (trigger == null) continue;
-
-            // CASE 2: Trigger fell asleep
-            if (trigger.sleep) {
-                if (activeScript != null) {
-                    activeScript.execute_off();
-                    activeScripts.set(i, null);
-                }
-                continue; 
-            }
-
-            EntityScript tScript = GameContext.get().get_script(trigger.group_tag);
-
-            while (activeScripts.size <= i) {
-                activeScripts.add(null);
-            }
-
-            // CASE 3: Direct swap to a different script
-            if (activeScript != null && activeScript != tScript) {
-                activeScript.execute_off();
-                activeScripts.set(i, null);
-                activeScript = null; 
-            }
-
-            // CASE 4: New trigger entry 
-            // this will only be called once because once this hits, all cases will return false
-            if (activeScript == null && tScript != null) {
-                tScript.execute(owner); 
-                activeScripts.set(i, tScript); 
+        // ==========================================
+        // STEP 1: DETECT EXITS
+        // ==========================================
+        removalScratch.clear();
+        for (IntMap.Entry<EntityScript> entry : activeScripts.entries()) {
+            int activeTriggerId = entry.key;
+            
+            // If we are running a script for a trigger we are no longer touching...
+            if (!currentOverlaps.contains(activeTriggerId, false)) {
+                entry.value.execute_off();       // Turn it off
+                removalScratch.add(activeTriggerId); // Mark it for removal
             }
         }
         
-        for (EntityScript active_script : activeScripts){
-            if (active_script != null) active_script.update_fixed(); // keeps running the update_fixed loop on any active scripts
+        // Physically remove them from the map now that iteration is finished
+        for (int id : removalScratch) {
+            activeScripts.remove(id);
         }
-        // Trim tracking array to match current overlap bounds
-        while (activeScripts.size > overlaps.size && activeScripts.peek() == null) {
-            activeScripts.pop();
+
+        // ==========================================
+        // STEP 2: DETECT ENTERS & ACTIVE UPDATES
+        // ==========================================
+        for (int i = 0; i < currentOverlaps.size; i++) {
+            int triggerId = currentOverlaps.get(i);
+            Info_Entity.Trigger trigger = EngineContext.get().get_trigger(triggerId);
+
+            if (trigger == null) continue;
+            if ((owner.flags & trigger.catch_flag) == 0) continue;
+
+            // Direct map lookup — order independent!
+            EntityScript runningScript = activeScripts.get(triggerId);
+
+            // CASE A: Trigger fell asleep while we were inside it
+            if (trigger.sleep) {
+                if (runningScript != null) {
+                    runningScript.execute_off();
+                    activeScripts.remove(triggerId);
+                }
+                continue;
+            } else {
+                trigger.trigger_targets();
+            }
+
+            EntityScript targetScript = EngineContext.get().get_script(trigger.group_tag);
+
+            // CASE B: Direct swap to a different script for the same trigger zone
+            if (runningScript != null && runningScript != targetScript) {
+                runningScript.execute_off();
+                activeScripts.remove(triggerId);
+                runningScript = null; // Forces CASE C to evaluate next
+            }
+
+            // CASE C: Fresh entry into this trigger zone
+            if (runningScript == null && targetScript != null) {
+                targetScript.execute(owner);
+                activeScripts.put(triggerId, targetScript);
+            }
+        }
+
+        // ==========================================
+        // STEP 3: TICK CONTINUOUS SCRIPTS
+        // ==========================================
+        for (EntityScript script : activeScripts.values()) {
+            script.update_fixed();
         }
     }
 
-    @Override
-    public void set_components(Array<Object> components) {
-    }
-
-    @Override
-    public void execute_off() {
-    }
-
-    @Override
-    public void execute(Object parameter) {
-    }
+    @Override public void set_components(Array<Object> components) {}
+    @Override public void execute_off() {}
+    @Override public void execute(Object parameter) {}
 }

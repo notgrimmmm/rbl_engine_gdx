@@ -1,4 +1,4 @@
-package io.rebelengine;
+package io.rebelengine.Debugging;
 
 public interface DebugCommand {
     String key();

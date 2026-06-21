@@ -4,6 +4,14 @@
  */
 package io.rebelengine;
 
+import io.game.Units.BasePlayer;
+import io.rebelengine.Instances.UI_TextInteraction;
+import io.rebelengine.Helpers.InputFocus;
+import io.rebelengine.Helpers.LightGridManager;
+import io.rebelengine.Helpers.EntityFlags;
+import io.rebelengine.Helpers.Info_Entity;
+import io.rebelengine.Helpers.Utils_Misc;
+import io.rebelengine.Debugging.DebuggingConsole;
 import io.game.Interactables.Item;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
@@ -15,9 +23,11 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
+import games.rednblack.miniaudio.MiniAudio;
 import io.game.Interactables.Prop;
 import io.game.Scripts.Player_InitiatorTriggeringScript;
 import io.game.Scripts.Player_PropsInteractionScript;
+import io.rebelengine.Instances.SFX;
 import io.rebelengine.Commands.InfoBodiesCommand;
 
 import io.rebelengine.Systems.CameraSyncSystem;
@@ -29,9 +39,7 @@ import io.rebelengine.Systems.TransformInterpolationSystem;
 import io.rebelengine.Commands.StatsCommand;
 import io.rebelengine.Commands.NoClipCommand;
 import io.rebelengine.Components.EntityScript;
-import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.ScriptComponent;
-import io.rebelengine.Components.TransformComponent;
 import io.rebelengine.Systems.ScriptingSystem;
 
 import java.io.IOException;
@@ -57,8 +65,10 @@ public class RebelEngineBase implements Disposable{
     public BSPFile      BSP;
 
     public BSPCollision BSP_COLLISION;
-    public DynamicRenderer DYN_RENDERER;
+    public DYNRenderer DYN_RENDERER;
     public UIRenderer UI_RENDERER;
+    
+
 
     public Camera camera;
 
@@ -74,13 +84,15 @@ public class RebelEngineBase implements Disposable{
 
     private BasePlayer player_base;
 
-    public RebelEngineBase() {
-        GameContext gameContext = new GameContext(this);
+    public RebelEngineBase(MiniAudio audio_engine) {
+        EngineContext gameContext = new EngineContext(this); // might cause issues later moving between scenes ???
         gameContext.initialize(gameContext);
+        gameContext.set_audioEngine(audio_engine);
 
         this.ASHLEY = new RebelAshleyEngine();
         this.SHADER = new EngineShader();
         this.UI_RENDERER = new UIRenderer();
+        
         this.debuggingConsole = new DebuggingConsole(this);
 
         this.inputMultiplexer = new InputMultiplexer();
@@ -144,7 +156,7 @@ public class RebelEngineBase implements Disposable{
         BSP_TREE     = new BSPTree(BSP);
         BSP_RENDERER = new BSPRenderer(BSP, SHADER);
         BSP_RENDERER.buildGeometry(textureRoot);
-        DYN_RENDERER = new DynamicRenderer(SHADER, textureRoot);
+        DYN_RENDERER = new DYNRenderer(SHADER, textureRoot);
         BSP_COLLISION = new BSPCollision(BSP);
 
 
@@ -152,13 +164,13 @@ public class RebelEngineBase implements Disposable{
 
         BSPEntities.Entity debugEnt = parsedEntities.first("debug");
         if (debugEnt != null) {
-            Vector3 depos = Utilities.parseVector3(debugEnt.get("origin"));
-            GameContext.get().set_noclip_camera(depos);
+            Vector3 depos = Utils_Misc.parseVector3(debugEnt.get("origin"));
+            EngineContext.get().set_noclip_camera(depos);
         }
 
         BSPEntities.Entity playerEnt = parsedEntities.first("info_player_start");
         if (playerEnt != null) {
-            Vector3 ppos = Utilities.parseVector3(playerEnt.get("origin"));
+            Vector3 ppos = Utils_Misc.parseVector3(playerEnt.get("origin"));
 
             player_base = new BasePlayer(ppos);
 
@@ -167,7 +179,6 @@ public class RebelEngineBase implements Disposable{
                     .add(new Player_PropsInteractionScript(player_base.getEntity()));
 
             player_base.getEntity().add(sc);
-
             ASHLEY.addEntity(player_base.getEntity());
             setCamera(player_base.getCamera());
 
@@ -175,6 +186,16 @@ public class RebelEngineBase implements Disposable{
             // highest-priority input target. Other systems (vehicles, spec
             // cameras) can call InputFocus.set(...) to take it later.
             player_base.focus();
+        }
+        
+        List<BSPEntities.Entity> sound_ent_list = parsedEntities.byClass.get("sound_ent");
+        if (sound_ent_list != null){
+            for (BSPEntities.Entity sound_ent : sound_ent_list){
+                SFX sfx = new SFX(sound_ent.get("wav"));
+                if (sound_ent.get("targetname") != null){
+                    EngineContext.get().add_groupComponent(sound_ent.get("targetname"), sfx);
+                }
+            }
         }
 
         // function brush items, things like doors
@@ -189,10 +210,10 @@ public class RebelEngineBase implements Disposable{
                 //System.out.println(bModel + " - " + bModel.firstFace);
                 DYN_RENDERER.addBrush(brushModelKey, bModel, BSP);
                 // 2. Create the "Instance" (The actual object in the world)
-                DynamicRenderer.RenderInstance inst = new DynamicRenderer.RenderInstance();
+                DYNRenderer.RenderInstance inst = new DYNRenderer.RenderInstance();
                 inst.meshKey = brushModelKey;
                 inst.bmIndex = bmIndex;
-                inst.position.set(DynamicRenderer.getModelCenter(bModel));
+                inst.position.set(DYNRenderer.getModelCenter(bModel));
 
                 Item item = new Item(inst, bModel, inst.position);
                 ASHLEY.addEntity(item);
@@ -203,10 +224,10 @@ public class RebelEngineBase implements Disposable{
         List<BSPEntities.Entity> physics_prop_list = parsedEntities.byClass.get("physics_prop");
         if (physics_prop_list != null){
             for (BSPEntities.Entity physics_prop : physics_prop_list){
-                DynamicRenderer.RenderInstance instance = Utilities.createRenderInstance(physics_prop.get("model"), DYN_RENDERER, BSP);
+                DYNRenderer.RenderInstance instance = Utils_Misc.createRenderInstance(physics_prop.get("model"), DYN_RENDERER, BSP);
                 BSPFile.Model bModel = BSP.models[instance.bmIndex];
                 Prop prop = new Prop(instance, bModel, instance.position);
-                
+                prop.add(new ScriptComponent());
                 ASHLEY.addEntity(prop);
                 DYN_RENDERER.instances.add(instance);
             }
@@ -215,22 +236,40 @@ public class RebelEngineBase implements Disposable{
         List<BSPEntities.Entity> trigger_list = parsedEntities.byClass.get("trigger_ent"); // brush entity
         if (trigger_list != null){
             for (BSPEntities.Entity trigger_ent : trigger_list){
-                // code here
                 String brushModelIndex = trigger_ent.get("model");
                 int bmIndex = Integer.parseInt(brushModelIndex.substring(1));
-
+                
+                Vector3 min = new Vector3(BSP.models[bmIndex].minX,BSP.models[bmIndex].minY,BSP.models[bmIndex].minZ);
+                Vector3 max = new Vector3(BSP.models[bmIndex].maxX,BSP.models[bmIndex].maxY,BSP.models[bmIndex].maxZ);
+                Vector3 center = new Vector3(
+                    (min.x + max.x) / 2.0f, 
+                    -(min.z + max.z) / 2.0f,
+                    -((min.y + max.y) / 2.0f)
+                );
+                
                 Info_Entity.Trigger trigger = new Info_Entity.Trigger();
-                GameContext.get().add_trigger(bmIndex, trigger);
+                trigger.center = center;
+                EngineContext.get().add_trigger(bmIndex, trigger);
 
                 if (trigger_ent.get("targetname") != null){
                     String group_tag = trigger_ent.get("targetname");
-                    GameContext.get().add_groupComponent(group_tag, trigger);
+                    EngineContext.get().add_groupComponent(group_tag, trigger);
                     trigger.group_tag = group_tag;
                 }
 
-                if (trigger_ent.get("target") != null){ // not used for anything right now...
+                if (trigger_ent.get("target") != null){
                     String target_tag = trigger_ent.get("target");
                     trigger.target_tag = target_tag;
+                }
+                
+                if (trigger_ent.get("initiator") != null && !trigger_ent.get("initiator").isBlank()){
+                    //set catch flag that is not player default
+                    String catchT = trigger_ent.get("initiator"); // the wanted initiator entity flag
+                    trigger.catch_flag = switch (catchT){
+                        case "projectile" -> EntityFlags.PROJECTILE;
+                        case "enemy"      -> EntityFlags.ENEMY;
+                        default -> trigger.catch_flag;
+                    };
                 }
             }
         }
@@ -239,10 +278,10 @@ public class RebelEngineBase implements Disposable{
         if (locations_list != null){
             for (BSPEntities.Entity info_location : locations_list){
                 Info_Entity.Location location = new Info_Entity.Location();
-                location.vec = Utilities.parseVector3(info_location.get("origin"));
+                location.vec = Utils_Misc.parseVector3(info_location.get("origin"));
 
                 String group_tag = info_location.get("targetname");
-                GameContext.get().add_groupComponent(group_tag, location);
+                EngineContext.get().add_groupComponent(group_tag, location);
             }
         }
 
@@ -250,10 +289,10 @@ public class RebelEngineBase implements Disposable{
         if (facing_points_list != null){
             for (BSPEntities.Entity facing_point : facing_points_list){
                 Info_Entity.FacingPoint facingPoint = new Info_Entity.FacingPoint();
-                facingPoint.point = Utilities.parseVector3(facing_point.get("origin"));
+                facingPoint.point = Utils_Misc.parseVector3(facing_point.get("origin"));
 
                 String group_tag = facing_point.get("targetname");
-                GameContext.get().add_groupComponent(group_tag, facingPoint);
+                EngineContext.get().add_groupComponent(group_tag, facingPoint);
             }
         }
 
@@ -262,15 +301,15 @@ public class RebelEngineBase implements Disposable{
             for (BSPEntities.Entity txt_interaction : txt_interaction_list){
                 UI_TextInteraction txt = new UI_TextInteraction();
                 txt.text = txt_interaction.get("text");
-                txt.position = Utilities.parseVector3(txt_interaction.get("origin"));
+                txt.position = Utils_Misc.parseVector3(txt_interaction.get("origin"));
                 if (txt_interaction.get("visible") != null){
                     txt.visible = txt_interaction.get("visible").equalsIgnoreCase("true");
                 }
 
-                GameContext.get().add_text_UI(txt); // for rendering
+                EngineContext.get().add_text_UI(txt); // for rendering
 
                 if (txt_interaction.get("targetname") !=  null){
-                    GameContext.get().add_groupComponent(txt_interaction.get("targetname"), txt); // for lookup
+                    EngineContext.get().add_groupComponent(txt_interaction.get("targetname"), txt); // for lookup
                 }
             }
         }
@@ -283,7 +322,7 @@ public class RebelEngineBase implements Disposable{
                 String group = "";
                 if (scriptor.get("target") != null){
                     group = scriptor.get("target");
-                    group_components = GameContext.get().get_groupComponentsArray(group);
+                    group_components = EngineContext.get().get_groupComponentsArray(group);
                 }
 
                 if (scriptor.get("class") == null){ // no class no script
@@ -318,7 +357,7 @@ public class RebelEngineBase implements Disposable{
                         }
                     }
 
-                    GameContext.get().add_script(group, script); // add to game context for look up
+                    EngineContext.get().add_script(group, script); // add to game context for look up
                     System.out.println("Instantiated script file : " + script);
 
                 } catch (ClassNotFoundException e) {
@@ -353,9 +392,13 @@ public class RebelEngineBase implements Disposable{
         float q3z =  camera.position.y;
 
         SHADER.clearLights();
-        //SHADER.addSpotLight(camera.position, 500f, camera.direction, Color.WHITE, 30f);
+        //SHADER.addPointLight(0, 32f, 0, 1, 1, 1, 300f); // weird against dyn instances
         SHADER.bind();
 
+        EngineContext.get().AUDIO().setListenerPosition(camera.position.x, camera.position.y, camera.position.z);
+        EngineContext.get().AUDIO().setListenerDirection(camera.direction.x, camera.direction.y, camera.direction.z);
+        // set listener worl up ? also should i set the listener index 0 ?
+        
         BSP_RENDERER.render(camera, q3x, q3y, q3z);
         DYN_RENDERER.render(camera); //already contains instances added
         UI_RENDERER.render(camera);
@@ -431,6 +474,7 @@ public class RebelEngineBase implements Disposable{
 
     @Override
     public void dispose() {
+        System.out.println("[ ENGINE DISPOSE ]");
         if (BSP_RENDERER != null)   BSP_RENDERER.dispose();
         if (SHADER != null)         SHADER.dispose();
         debuggingConsole.dispose();

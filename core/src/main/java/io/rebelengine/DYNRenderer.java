@@ -1,5 +1,6 @@
 package io.rebelengine;
 
+import io.rebelengine.Helpers.LightGridManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
@@ -13,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DynamicRenderer implements Disposable {
+public class DYNRenderer implements Disposable {
     private final EngineShader SHADER;
     private final String textureBase;
     
@@ -28,7 +29,7 @@ public class DynamicRenderer implements Disposable {
     private final Matrix4 modelTransform = new Matrix4();
     private final Matrix4 combinedMatrix = new Matrix4();
 
-    public DynamicRenderer(EngineShader shader, String texturebase){
+    public DYNRenderer(EngineShader shader, String texturebase){
         this.SHADER = shader;
         this.textureBase = texturebase;
     }
@@ -227,7 +228,7 @@ public class DynamicRenderer implements Disposable {
         SHADER.bind();
         
         for (RenderInstance inst : instances) {
-            Color lightC = LightGridManager.getAmbientAt(inst.position.x, -inst.position.z, inst.position.y);
+            Color lightC = LightGridManager.getAmbientAt(inst.position.x, inst.position.y, inst.position.z);
             inst.lightGridColor.set(lightC.r, lightC.g, lightC.b);
             
             Array<BrushBatch> batches = brushLibrary.get(inst.meshKey);

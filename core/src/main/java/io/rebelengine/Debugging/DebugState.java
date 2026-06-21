@@ -1,4 +1,4 @@
-package io.rebelengine;
+package io.rebelengine.Debugging;
 
 public class DebugState {
     public boolean showStats;

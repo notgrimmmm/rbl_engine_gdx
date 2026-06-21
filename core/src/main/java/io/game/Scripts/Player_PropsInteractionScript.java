@@ -4,19 +4,19 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import io.game.Interactables.Prop;
 import io.rebelengine.BSPCollision;
 import io.rebelengine.Components.EntityScript;
 import io.rebelengine.Components.PhysicsBodyComponent;
+import io.rebelengine.Components.ScriptComponent;
 import io.rebelengine.Components.TransformComponent;
-import io.rebelengine.GameContext;
-import io.rebelengine.UI_TextInteraction;
+import io.rebelengine.EngineContext;
+import io.rebelengine.Instances.UI_TextInteraction;
 
 /**
- *
+ * Interactions with only props - pick and and throw
  */
 public class Player_PropsInteractionScript implements EntityScript{
     
@@ -24,16 +24,15 @@ public class Player_PropsInteractionScript implements EntityScript{
     UI_TextInteraction txt;
     
     private Entity hoveredEntity;
-    private Entity grabbedEntity;
-    private final Vector2 centerProjection = new Vector2();
+    private Entity grabbedEntity;;
     private boolean inputLatched = false;
     
     private float builtUpForce = 1f;
-
+    
     public Player_PropsInteractionScript(Entity entity){
         this.owner = entity;
         this.txt = new UI_TextInteraction();
-        GameContext.get().add_text_UI(txt);
+        EngineContext.get().add_text_UI(txt);
     }
     
 
@@ -45,17 +44,18 @@ public class Player_PropsInteractionScript implements EntityScript{
     @Override
     public void update_fixed() {
         BSPCollision.TraceResult rayResult = new BSPCollision.TraceResult();
-        Vector3 start = GameContext.get().get_activeCamera().position;
-        Vector3 dir = GameContext.get().get_activeCamera().direction;
-        Vector3 end = new Vector3(start).mulAdd(dir, 70f);
-        GameContext.get().trace_ray(owner, start, end, rayResult);
+        Vector3 start = EngineContext.get().get_activeCamera().position;
+        Vector3 dir = EngineContext.get().get_activeCamera().direction;
+        Vector3 end = new Vector3(start).mulAdd(dir, 100f);
+        EngineContext.get().trace_ray(owner, start, end, rayResult);
         
-        txt.twoDProjectionFromCenter = centerProjection;
-        txt.visible = true;
-        txt.text = rayResult.hitEntity == null ? "" : "HIT";
         hoveredEntity = rayResult.hitEntity;
-        
         if (!(hoveredEntity instanceof Prop)) hoveredEntity = null; // dont bother with it if its not a Prop
+        
+        txt.text = hoveredEntity == null ? "" : "HIT";
+        txt.position = hoveredEntity == null ? new Vector3() : hoveredEntity.getComponent(TransformComponent.class).renderPosition;
+        txt.visible = true;
+        
         
         if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)){ // TODO: some hand animations cocking back to show force build up and realease for 3 states low, mid, high force
             builtUpForce += 0.1f;
@@ -69,6 +69,7 @@ public class Player_PropsInteractionScript implements EntityScript{
                     releaseGrabbedEntity();
                 } else if (hoveredEntity != null) {
                     grabEntity(hoveredEntity);
+                    txt.visible = false;
                 }
                 inputLatched = true; // Lock the latch so it won't fire again next fixed frame
             }
@@ -83,11 +84,14 @@ public class Player_PropsInteractionScript implements EntityScript{
         PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
         TransformComponent hitTransform = entity.getComponent(TransformComponent.class);
         TransformComponent ownerTransform = owner.getComponent(TransformComponent.class);
-
         if (body == null || hitTransform == null || ownerTransform == null) {
             return;
         }
-
+        
+        hitTransform.currentPitch = 0f;
+        body.wantsCrouch = false; // all of these are needed make the body bounds to normal
+        body.crouching = false;
+        body.grounded = false;
         body.noclip = true;
         body.velocity.setZero();
         grabbedEntity = entity;
@@ -111,6 +115,14 @@ public class Player_PropsInteractionScript implements EntityScript{
 
             Vector3 finalThrowVelocity = new Vector3(grabForward).scl(30f * builtUpForce); // forward plus direction xz (pitch)
             body.velocity.set(finalThrowVelocity);
+            
+            /**
+             * NOTE: the constructor from new script() sets the owner back to projectile | initiator regardless of the script not being added
+             * the script is not added and basically dead and will be garbage collected at some point
+             * this is technically a bug, but resetting the entity back to an initiator like this should be fine as it rearms the original projectile script
+             */
+            grabbedEntity.getComponent(ScriptComponent.class).add(new Prop_InitiatorProjectileScript(grabbedEntity));
+            
             body.grounded = false;
         }
         grabbedEntity = null;

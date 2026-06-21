@@ -8,7 +8,7 @@ import com.badlogic.ashley.utils.ImmutableArray;
 import io.rebelengine.Components.InputControlComponent;
 import io.rebelengine.Components.MouseLookComponent;
 import io.rebelengine.Components.TransformComponent;
-import io.rebelengine.InputFocus;
+import io.rebelengine.Helpers.InputFocus;
 import io.rebelengine.RebelAshleyEngine;
 
 public class FrameInputSystem extends EntitySystem implements RebelAshleyEngine.FrameUpdatable {

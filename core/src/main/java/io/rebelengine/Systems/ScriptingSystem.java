@@ -11,7 +11,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
 import io.rebelengine.Components.EntityScript;
 import io.rebelengine.Components.ScriptComponent;
-import io.rebelengine.EntityFlags;
+import io.rebelengine.Helpers.EntityFlags;
 import io.rebelengine.RebelAshleyEngine;
 
 /**
@@ -41,6 +41,15 @@ public class ScriptingSystem extends EntitySystem implements RebelAshleyEngine.F
                 behavior.update_fixed();
             }
         }
+    }
+    
+    public int get_initatorCount(){
+     if (entities == null) return 0;
+     int count = 0;
+     for (Entity entity : entities){
+         if ((entity.flags & EntityFlags.INITIATOR) != 0) count++;
+     }
+     return count;
     }
     
 }

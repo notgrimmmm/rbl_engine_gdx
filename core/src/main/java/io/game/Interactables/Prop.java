@@ -10,13 +10,13 @@ import io.rebelengine.BSPFile;
 import io.rebelengine.Components.InstanceComponent;
 import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.TransformComponent;
-import io.rebelengine.DynamicRenderer;
+import io.rebelengine.DYNRenderer;
 
 /**
  *
  */
 public class Prop extends Entity{
-    public Prop (DynamicRenderer.RenderInstance instance, BSPFile.Model model, Vector3 origin){
+    public Prop (DYNRenderer.RenderInstance instance, BSPFile.Model model, Vector3 origin){
         InstanceComponent instanceComponent = new InstanceComponent();
         instanceComponent.instance = instance;
         instanceComponent.bspModelIndex = instance.bmIndex;
@@ -34,8 +34,9 @@ public class Prop extends Entity{
 
         physics.minsStand.set(-halfX , -halfY, -halfZ);
         physics.maxsStand.set(halfX, halfY, halfZ);
-        physics.minsCrouch.set(physics.minsStand);
-        physics.maxsCrouch.set(physics.maxsStand);
+        
+        physics.minsCrouch.set(-halfX, -halfZ, -halfY);
+        physics.maxsCrouch.set(halfX, halfZ, halfY);
        
         physics.bspModelIndexReference = instance.bmIndex;
         physics.gravity = 200f;

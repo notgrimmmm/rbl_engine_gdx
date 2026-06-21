@@ -4,6 +4,7 @@
  */
 package io.rebelengine;
 
+import io.rebelengine.Instances.UI_TextInteraction;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
@@ -39,7 +40,7 @@ public class UIRenderer {
     
     public void render(Camera camera){
         // get all text ui 
-        Array<UI_TextInteraction> txtArray = GameContext.get().get_text_interactions();
+        Array<UI_TextInteraction> txtArray = EngineContext.get().get_text_interactions();
         // get all modules ui
         
         //render

@@ -1,4 +1,4 @@
-package io.rebelengine;
+package io.rebelengine.Helpers;
 
 import com.badlogic.ashley.core.Entity;
 

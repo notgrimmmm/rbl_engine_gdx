@@ -1,5 +1,6 @@
-package io.rebelengine;
+package io.rebelengine.Debugging;
 
+import io.rebelengine.Debugging.DebugCommand;
 import com.badlogic.gdx.utils.Array;
 import java.util.HashMap;
 import java.util.List;

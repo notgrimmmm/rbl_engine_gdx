@@ -5,12 +5,12 @@
 package io.rebelengine.Components;
 
 import com.badlogic.ashley.core.Component;
-import io.rebelengine.DynamicRenderer;
+import io.rebelengine.DYNRenderer;
 
 /**
  *
  */
 public class InstanceComponent implements Component{
-    public DynamicRenderer.RenderInstance instance = null;
+    public DYNRenderer.RenderInstance instance = null;
     public int bspModelIndex = -1;
 }

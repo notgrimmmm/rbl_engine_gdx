@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import games.rednblack.miniaudio.MiniAudio;
 import io.rebelengine.RebelEngineBase;
 
 public class FirstScreen implements Screen {
@@ -12,9 +13,11 @@ public class FirstScreen implements Screen {
     private static final String TEXTURE_ROOT = "main/baseq3";
 
     private final RebelEngineBase ENGINE;
+    private final MiniAudio AUDIO_ENGINE;
     
     public FirstScreen(){
-        ENGINE = new RebelEngineBase();
+        AUDIO_ENGINE = new MiniAudio();
+        ENGINE = new RebelEngineBase(AUDIO_ENGINE);
     }
 
     @Override
@@ -51,6 +54,8 @@ public class FirstScreen implements Screen {
 
     @Override
     public void dispose() {
+        System.out.println("[ SCREEN DISPOSE ]");
+        if (AUDIO_ENGINE != null) AUDIO_ENGINE.dispose();
         if (ENGINE != null) ENGINE.dispose();
     }
 }

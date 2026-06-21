@@ -1,11 +1,12 @@
-package io.rebelengine;
+package io.rebelengine.Helpers;
 
 import com.badlogic.gdx.math.Vector3;
+import io.rebelengine.BSPCollision;
 
 /**
  * Utility for Narrow Phase collision detection between AABBs.
  */
-public class CollisionUtils {
+public class Utils_Collision {
 
     /**
      * Sweeps one AABB against another static AABB.

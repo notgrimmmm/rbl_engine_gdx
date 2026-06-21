@@ -136,7 +136,7 @@ public class BSPCollision {
                     traceThroughBrush(brush, start, end, mins, maxs, tmpTraceResult);
                     if (tmpTraceResult.startSolid || tmpTraceResult.fraction < 1.0){
                         result.nonSolidOverlapIndices.add(mi); // mi is the real submodel index, bi is the index inside that mi brush
-                        return;
+                        break;
                     }
 
                     continue;

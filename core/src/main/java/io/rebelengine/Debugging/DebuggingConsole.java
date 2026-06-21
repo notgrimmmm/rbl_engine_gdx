@@ -1,5 +1,10 @@
-package io.rebelengine;
+package io.rebelengine.Debugging;
 
+import io.rebelengine.Debugging.DebugState;
+import io.rebelengine.Debugging.DebugRenderContext;
+import io.rebelengine.Debugging.DebugContext;
+import io.rebelengine.Debugging.DebugCommandRegistry;
+import io.rebelengine.Debugging.DebugCommand;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
@@ -12,6 +17,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import io.rebelengine.RebelEngineBase;
 
 public class DebuggingConsole extends InputAdapter implements Disposable {
     private static final float TEXT_X = 200f;

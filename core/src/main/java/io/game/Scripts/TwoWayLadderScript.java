@@ -7,7 +7,6 @@ package io.game.Scripts;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import io.game.Behaviors.Input_LadderMoveBehavior;
@@ -15,8 +14,8 @@ import io.game.Behaviors.Locomotion_LadderMove;
 import io.rebelengine.Components.EntityScript;
 import io.rebelengine.Components.InputControlComponent;
 import io.rebelengine.Components.TransformComponent;
-import io.rebelengine.Info_Entity;
-import io.rebelengine.UI_TextInteraction;
+import io.rebelengine.Helpers.Info_Entity;
+import io.rebelengine.Instances.UI_TextInteraction;
 
 /**
  * 
@@ -25,8 +24,6 @@ public class TwoWayLadderScript implements EntityScript{
 
     private UI_TextInteraction text_interaction;
     private Info_Entity.Trigger trigger;
-    private final Vector3 topPosition = new Vector3();
-    private final Vector3 botPosition = new Vector3();
     private final Vector3 facePoint = new Vector3();
     
     private boolean initiator_IN = false;
@@ -34,6 +31,8 @@ public class TwoWayLadderScript implements EntityScript{
     private final InputControlComponent ladderInput;
     private InputControlComponent initatorDefaultInput;
     private Entity initiatorReference;
+    
+    float peakY;
     
     boolean climbing = false;
     private boolean inputLatched = false;
@@ -50,22 +49,10 @@ public class TwoWayLadderScript implements EntityScript{
         for (Object component : components){
             if (component instanceof UI_TextInteraction text){
                 this.text_interaction = text;
+                this.peakY = text_interaction.position.y;
             }
             if (component instanceof Info_Entity.Trigger trig){
                 this.trigger = trig;
-            }
-            if (component instanceof Info_Entity.Location loc){
-                if (topPosition == null && botPosition == null){
-                    topPosition.set(loc.vec);
-                }
-                if (topPosition != null){
-                    if (loc.vec.y > topPosition.y){
-                        botPosition.set(topPosition);
-                        topPosition.set(loc.vec);
-                    }else{
-                        botPosition.set(loc.vec);
-                    }
-                }
             }
             if (component instanceof Info_Entity.FacingPoint fp){
                 facePoint.set(fp.point);
@@ -77,12 +64,20 @@ public class TwoWayLadderScript implements EntityScript{
     @Override
     public void execute(Object parameter) {
         if (parameter instanceof Entity entity){
-            if ((entity.flags & trigger.catch_flag) != 0){ // if the flags have the player flag we good
+            if ((entity.flags & trigger.catch_flag) != 0){ // if the flags have the wanted flag we good
                 initiator_IN = true;
                 initiatorReference = entity;
+            }else{
+                return;
             }
+        }else{
+            return;
         }
-        text_interaction.twoDProjectionFromCenter = new Vector2(0,0);
+        
+        TransformComponent transform = initiatorReference.getComponent(TransformComponent.class);
+        float desiredTextY = transform.renderPosition.y + 48f; // hard coded eye height
+        text_interaction.position.y = Math.min(desiredTextY, peakY);
+        
         text_interaction.visible = true;
         
     }
@@ -133,8 +128,6 @@ public class TwoWayLadderScript implements EntityScript{
         initiatorReference.add(ladderInput);
 
         TransformComponent initiator_transform = initiatorReference.getComponent(TransformComponent.class);
-        Vector3 wantedPosition = new Vector3(topPosition.x, initiator_transform.currentPosition.y, topPosition.z);
-        initiator_transform.currentPosition.set(wantedPosition);
         
         // grab direction vector from facing point
         float dx = facePoint.x - initiator_transform.currentPosition.x;
@@ -143,6 +136,22 @@ public class TwoWayLadderScript implements EntityScript{
         // this is engine specific, leave as x, -z for engine axis
         float angleInRadians = (float) Math.atan2(dx, -dz);
         float angleInDegrees = angleInRadians * 180.0f / (float) Math.PI;
+        
+        Vector3 dir = new Vector3(
+            facePoint.x - trigger.center.x,
+            0, // Keep it flat on the horizontal plane
+            facePoint.z - trigger.center.z
+        );
+        dir.nor();
+
+        // we want the opposite of the face direction plus an offset
+        float distanceOffset = 16.0f; // make it modular ?
+        Vector3 wantedPosition = new Vector3(
+            trigger.center.x - (dir.x * distanceOffset),
+            initiator_transform.currentPosition.y, // Keep player's current height
+            trigger.center.z - (dir.z * distanceOffset)
+        );
+        initiator_transform.currentPosition.set(wantedPosition);
         
         initiator_transform.currentYaw = angleInDegrees;
         

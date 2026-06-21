@@ -1,5 +1,7 @@
-package io.rebelengine;
+package io.game.Units;
 
+import io.rebelengine.Helpers.InputFocus;
+import io.rebelengine.Helpers.EntityFlags;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
@@ -14,10 +16,10 @@ import io.rebelengine.Components.TransformComponent;
 
 public class BasePlayer {
     public static final float RADIUS = 16f;
-    public static final float HEIGHT_STAND = 32f;
-    public static final float HEIGHT_CROUCH = 28f;
-    public static final float EYE_STAND = 48f;
-    public static final float EYE_CROUCH = 20f;
+    public static final float HEIGHT_STAND = 64f;
+    public static final float HEIGHT_CROUCH = 32f;
+    public static final float EYE_STAND = 50f;
+    public static final float EYE_CROUCH = 30f;
 
     private final Entity entity;
     private final PerspectiveCamera camera;
@@ -45,6 +47,8 @@ public class BasePlayer {
         physics.maxsCrouch.set(RADIUS, HEIGHT_CROUCH / 2f, RADIUS);
         physics.eyeStand = EYE_STAND;
         physics.eyeCrouch = EYE_CROUCH;
+        physics.jumpSpeed = 180f;
+        physics.ignore_physics_transformations = true;
 
         camera = new PerspectiveCamera(90f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 3f;

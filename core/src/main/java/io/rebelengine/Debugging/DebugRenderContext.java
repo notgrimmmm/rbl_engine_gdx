@@ -1,4 +1,4 @@
-package io.rebelengine;
+package io.rebelengine.Debugging;
 
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;

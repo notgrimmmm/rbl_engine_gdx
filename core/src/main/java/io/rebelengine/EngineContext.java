@@ -1,19 +1,22 @@
 package io.rebelengine;
 
+import io.rebelengine.Instances.UI_TextInteraction;
+import io.rebelengine.Helpers.Info_Entity;
+import io.rebelengine.Debugging.DebugCamera;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import games.rednblack.miniaudio.MiniAudio;
 import io.rebelengine.Components.EntityScript;
-import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Systems.PhysicsBodySystem;
 import java.util.HashMap;
 
 /**
  *
  */
-public class GameContext {
-    private static GameContext instance;
+public class EngineContext {
+    private static EngineContext instance;
     private final RebelEngineBase instance_engine;
     private DebugCamera camera_debug_noclip;
     private final HashMap<Integer, Info_Entity.Trigger> triggers = new HashMap<>();
@@ -21,17 +24,26 @@ public class GameContext {
     private final HashMap<String, EntityScript> scripts = new HashMap<>();
     
     private final Array<UI_TextInteraction> text_Interactions = new Array<>();
+    private MiniAudio instance_audio;
     
-    public GameContext (RebelEngineBase rblBase){
+    public EngineContext (RebelEngineBase rblBase){
         instance_engine = rblBase;
     }
     
-    public static GameContext get(){
+    public static EngineContext get(){
         return instance;
     }
     
-    public void initialize(GameContext gc){
+    public void initialize(EngineContext gc){
         instance = gc;
+    }
+    
+    public void set_audioEngine(MiniAudio audio){
+        instance_audio = audio;
+    }
+    
+    public MiniAudio AUDIO(){
+        return instance_audio;
     }
     
     public BSPCollision COLLISION(){

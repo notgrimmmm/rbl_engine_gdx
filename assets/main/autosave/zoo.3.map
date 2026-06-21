@@ -72,96 +72,333 @@
 }
 // brush 7
 {
-( -236 120 12 ) ( -236 121 12 ) ( -236 120 13 ) common/prototype 0 0 0 1 1
-( -236 122 12 ) ( -236 122 13 ) ( -235 122 12 ) common/prototype 0 0 0 1 1
-( -236 120 12 ) ( -235 120 12 ) ( -236 121 12 ) common/prototype 0 0 0 1 1
-( -232 124 16 ) ( -232 125 16 ) ( -231 124 16 ) common/prototype 0 0 0 1 1
-( -232 124 16 ) ( -231 124 16 ) ( -232 124 17 ) common/prototype 0 0 0 1 1
-( -212 124 16 ) ( -212 124 17 ) ( -212 125 16 ) common/prototype 0 0 0 1 1
+( -236 120 20 ) ( -236 120 19 ) ( -236 121 20 ) common/prototype 8 0 270 1 1
+( -236 121 20 ) ( -235 121 20 ) ( -236 121 19 ) common/prototype 8 -12 270 1 1
+( -234 124 17 ) ( -233 124 17 ) ( -234 125 17 ) common/prototype 0 -12 90 1 -1
+( -236 120 20 ) ( -236 121 20 ) ( -235 120 20 ) common/prototype 0 -12 90 1 -1
+( -234 123 16 ) ( -234 123 15 ) ( -233 123 16 ) common/prototype 8 -12 270 1 1
+( -212 124 16 ) ( -212 125 16 ) ( -212 124 15 ) common/prototype 8 0 270 1 1
 }
 // brush 8
 {
-( -236 120 28 ) ( -236 121 28 ) ( -236 120 29 ) common/prototype 0 16 0 1 1
-( -236 122 28 ) ( -236 122 29 ) ( -235 122 28 ) common/prototype 0 16 0 1 1
-( -236 120 28 ) ( -235 120 28 ) ( -236 121 28 ) common/prototype 0 0 0 1 1
-( -232 124 32 ) ( -232 125 32 ) ( -231 124 32 ) common/prototype 0 0 0 1 1
-( -232 124 32 ) ( -231 124 32 ) ( -232 124 33 ) common/prototype 0 16 0 1 1
-( -212 124 32 ) ( -212 124 33 ) ( -212 125 32 ) common/prototype 0 16 0 1 1
+( -236 120 52 ) ( -236 120 51 ) ( -236 121 52 ) common/prototype 8 0 270 1 1
+( -236 121 52 ) ( -235 121 52 ) ( -236 121 51 ) common/prototype 8 -12 270 1 1
+( -234 124 49 ) ( -233 124 49 ) ( -234 125 49 ) common/prototype 0 -12 90 1 -1
+( -236 120 52 ) ( -236 121 52 ) ( -235 120 52 ) common/prototype 0 -12 90 1 -1
+( -234 123 48 ) ( -234 123 47 ) ( -233 123 48 ) common/prototype 8 -12 270 1 1
+( -212 124 48 ) ( -212 125 48 ) ( -212 124 47 ) common/prototype 8 0 270 1 1
 }
 // brush 9
 {
-( -236 120 44 ) ( -236 121 44 ) ( -236 120 45 ) common/prototype 0 0 0 1 1
-( -236 122 44 ) ( -236 122 45 ) ( -235 122 44 ) common/prototype 0 0 0 1 1
-( -236 120 44 ) ( -235 120 44 ) ( -236 121 44 ) common/prototype 0 0 0 1 1
-( -232 124 48 ) ( -232 125 48 ) ( -231 124 48 ) common/prototype 0 0 0 1 1
-( -232 124 48 ) ( -231 124 48 ) ( -232 124 49 ) common/prototype 0 0 0 1 1
-( -212 124 48 ) ( -212 124 49 ) ( -212 125 48 ) common/prototype 0 0 0 1 1
+( -236 120 84 ) ( -236 120 83 ) ( -236 121 84 ) common/prototype 8 0 270 1 1
+( -236 121 84 ) ( -235 121 84 ) ( -236 121 83 ) common/prototype 8 -12 270 1 1
+( -234 124 81 ) ( -233 124 81 ) ( -234 125 81 ) common/prototype 0 -12 90 1 -1
+( -236 120 84 ) ( -236 121 84 ) ( -235 120 84 ) common/prototype 0 -12 90 1 -1
+( -234 123 80 ) ( -234 123 79 ) ( -233 123 80 ) common/prototype 8 -12 270 1 1
+( -212 124 80 ) ( -212 125 80 ) ( -212 124 79 ) common/prototype 8 0 270 1 1
 }
 // brush 10
 {
-( -236 120 60 ) ( -236 121 60 ) ( -236 120 61 ) common/prototype 0 16 0 1 1
-( -236 122 60 ) ( -236 122 61 ) ( -235 122 60 ) common/prototype 0 16 0 1 1
-( -236 120 60 ) ( -235 120 60 ) ( -236 121 60 ) common/prototype 0 0 0 1 1
-( -232 124 64 ) ( -232 125 64 ) ( -231 124 64 ) common/prototype 0 0 0 1 1
-( -232 124 64 ) ( -231 124 64 ) ( -232 124 65 ) common/prototype 0 16 0 1 1
-( -212 124 64 ) ( -212 124 65 ) ( -212 125 64 ) common/prototype 0 16 0 1 1
+( -236 120 116 ) ( -236 120 115 ) ( -236 121 116 ) common/prototype 8 0 270 1 1
+( -236 121 116 ) ( -235 121 116 ) ( -236 121 115 ) common/prototype 8 -12 270 1 1
+( -234 124 113 ) ( -233 124 113 ) ( -234 125 113 ) common/prototype 0 -12 90 1 -1
+( -236 120 116 ) ( -236 121 116 ) ( -235 120 116 ) common/prototype 0 -12 90 1 -1
+( -234 123 112 ) ( -234 123 111 ) ( -233 123 112 ) common/prototype 8 -12 270 1 1
+( -212 124 112 ) ( -212 125 112 ) ( -212 124 111 ) common/prototype 8 0 270 1 1
 }
 // brush 11
 {
-( -236 120 76 ) ( -236 121 76 ) ( -236 120 77 ) common/prototype 0 0 0 1 1
-( -236 122 76 ) ( -236 122 77 ) ( -235 122 76 ) common/prototype 0 0 0 1 1
-( -236 120 76 ) ( -235 120 76 ) ( -236 121 76 ) common/prototype 0 0 0 1 1
-( -232 124 80 ) ( -232 125 80 ) ( -231 124 80 ) common/prototype 0 0 0 1 1
-( -232 124 80 ) ( -231 124 80 ) ( -232 124 81 ) common/prototype 0 0 0 1 1
-( -212 124 80 ) ( -212 124 81 ) ( -212 125 80 ) common/prototype 0 0 0 1 1
+( -236 120 148 ) ( -236 120 147 ) ( -236 121 148 ) common/prototype 8 0 270 1 1
+( -236 121 148 ) ( -235 121 148 ) ( -236 121 147 ) common/prototype 8 -12 270 1 1
+( -234 124 145 ) ( -233 124 145 ) ( -234 125 145 ) common/prototype 0 -12 90 1 -1
+( -236 120 148 ) ( -236 121 148 ) ( -235 120 148 ) common/prototype 0 -12 90 1 -1
+( -234 123 144 ) ( -234 123 143 ) ( -233 123 144 ) common/prototype 8 -12 270 1 1
+( -212 124 144 ) ( -212 125 144 ) ( -212 124 143 ) common/prototype 8 0 270 1 1
 }
 // brush 12
 {
-( -236 120 92 ) ( -236 121 92 ) ( -236 120 93 ) common/prototype 0 16 0 1 1
-( -236 122 92 ) ( -236 122 93 ) ( -235 122 92 ) common/prototype 0 16 0 1 1
-( -236 120 92 ) ( -235 120 92 ) ( -236 121 92 ) common/prototype 0 0 0 1 1
-( -232 124 96 ) ( -232 125 96 ) ( -231 124 96 ) common/prototype 0 0 0 1 1
-( -232 124 96 ) ( -231 124 96 ) ( -232 124 97 ) common/prototype 0 16 0 1 1
-( -212 124 96 ) ( -212 124 97 ) ( -212 125 96 ) common/prototype 0 16 0 1 1
+( -236 120 180 ) ( -236 120 179 ) ( -236 121 180 ) common/prototype 8 0 270 1 1
+( -236 121 180 ) ( -235 121 180 ) ( -236 121 179 ) common/prototype 8 -12 270 1 1
+( -234 124 177 ) ( -233 124 177 ) ( -234 125 177 ) common/prototype 0 -12 90 1 -1
+( -236 120 180 ) ( -236 121 180 ) ( -235 120 180 ) common/prototype 0 -12 90 1 -1
+( -234 123 176 ) ( -234 123 175 ) ( -233 123 176 ) common/prototype 8 -12 270 1 1
+( -212 124 176 ) ( -212 125 176 ) ( -212 124 175 ) common/prototype 8 0 270 1 1
 }
 // brush 13
 {
-( -236 120 108 ) ( -236 121 108 ) ( -236 120 109 ) common/prototype 0 0 0 1 1
-( -236 122 108 ) ( -236 122 109 ) ( -235 122 108 ) common/prototype 0 0 0 1 1
-( -236 120 108 ) ( -235 120 108 ) ( -236 121 108 ) common/prototype 0 0 0 1 1
-( -232 124 112 ) ( -232 125 112 ) ( -231 124 112 ) common/prototype 0 0 0 1 1
-( -232 124 112 ) ( -231 124 112 ) ( -232 124 113 ) common/prototype 0 0 0 1 1
-( -212 124 112 ) ( -212 124 113 ) ( -212 125 112 ) common/prototype 0 0 0 1 1
+( -236 120 212 ) ( -236 120 211 ) ( -236 121 212 ) common/prototype 8 0 270 1 1
+( -236 121 212 ) ( -235 121 212 ) ( -236 121 211 ) common/prototype 8 -12 270 1 1
+( -234 124 209 ) ( -233 124 209 ) ( -234 125 209 ) common/prototype 0 -12 90 1 -1
+( -236 120 212 ) ( -236 121 212 ) ( -235 120 212 ) common/prototype 0 -12 90 1 -1
+( -234 123 208 ) ( -234 123 207 ) ( -233 123 208 ) common/prototype 8 -12 270 1 1
+( -212 124 208 ) ( -212 125 208 ) ( -212 124 207 ) common/prototype 8 0 270 1 1
 }
 // brush 14
 {
-( -236 120 124 ) ( -236 121 124 ) ( -236 120 125 ) common/prototype 0 16 0 1 1
-( -236 122 124 ) ( -236 122 125 ) ( -235 122 124 ) common/prototype 0 16 0 1 1
-( -236 120 124 ) ( -235 120 124 ) ( -236 121 124 ) common/prototype 0 0 0 1 1
-( -232 124 128 ) ( -232 125 128 ) ( -231 124 128 ) common/prototype 0 0 0 1 1
-( -232 124 128 ) ( -231 124 128 ) ( -232 124 129 ) common/prototype 0 16 0 1 1
-( -212 124 128 ) ( -212 124 129 ) ( -212 125 128 ) common/prototype 0 16 0 1 1
+( -236 120 244 ) ( -236 120 243 ) ( -236 121 244 ) common/prototype 8 0 270 1 1
+( -236 121 244 ) ( -235 121 244 ) ( -236 121 243 ) common/prototype 8 -12 270 1 1
+( -234 124 241 ) ( -233 124 241 ) ( -234 125 241 ) common/prototype 0 -12 90 1 -1
+( -236 120 244 ) ( -236 121 244 ) ( -235 120 244 ) common/prototype 0 -12 90 1 -1
+( -234 123 240 ) ( -234 123 239 ) ( -233 123 240 ) common/prototype 8 -12 270 1 1
+( -212 124 240 ) ( -212 125 240 ) ( -212 124 239 ) common/prototype 8 0 270 1 1
 }
 // brush 15
 {
-( -236 120 140 ) ( -236 121 140 ) ( -236 120 141 ) common/prototype 0 0 0 1 1
-( -236 122 140 ) ( -236 122 141 ) ( -235 122 140 ) common/prototype 0 0 0 1 1
-( -236 120 140 ) ( -235 120 140 ) ( -236 121 140 ) common/prototype 0 0 0 1 1
-( -232 124 144 ) ( -232 125 144 ) ( -231 124 144 ) common/prototype 0 0 0 1 1
-( -232 124 144 ) ( -231 124 144 ) ( -232 124 145 ) common/prototype 0 0 0 1 1
-( -212 124 144 ) ( -212 124 145 ) ( -212 125 144 ) common/prototype 0 0 0 1 1
+( -1024 640 0 ) ( -1024 641 0 ) ( -1024 640 1 ) common/prototype 0 0 0 1 1
+( -1024 640 0 ) ( -1024 640 1 ) ( -1023 640 0 ) common/prototype 0 0 0 1 1
+( -1024 640 0 ) ( -1023 640 0 ) ( -1024 641 0 ) common/prototype 0 0 0 1 1
+( -896 768 256 ) ( -896 769 256 ) ( -895 768 256 ) common/prototype 0 0 0 1 1
+( -896 768 128 ) ( -895 768 128 ) ( -896 768 129 ) common/prototype 0 0 0 1 1
+( 1152 768 128 ) ( 1152 768 129 ) ( 1152 769 128 ) common/prototype 0 0 0 1 1
+}
+// brush 16
+{
+( -1024 640 0 ) ( -1024 641 0 ) ( -1024 640 1 ) common/prototype 0 0 0 1 1
+( -896 768 128 ) ( -896 768 129 ) ( -895 768 128 ) common/prototype 0 0 0 1 1
+( -1024 640 0 ) ( -1023 640 0 ) ( -1024 641 0 ) common/prototype 0 0 0 1 1
+( -896 768 640 ) ( -896 769 640 ) ( -895 768 640 ) common/prototype 0 0 0 1 1
+( -896 896 128 ) ( -895 896 128 ) ( -896 896 129 ) common/prototype 0 0 0 1 1
+( 1152 768 128 ) ( 1152 768 129 ) ( 1152 769 128 ) common/prototype 0 0 0 1 1
+}
+// brush 17
+{
+( -1024 -640 0 ) ( -1024 -640 1 ) ( -1024 -641 0 ) common/prototype 0 0 180 1 -1
+( -896 -768 128 ) ( -896 -768 129 ) ( -895 -768 128 ) common/prototype 0 0 0 1 1
+( -1024 -640 0 ) ( -1024 -641 0 ) ( -1023 -640 0 ) common/prototype 0 0 0 1 -1
+( -896 -768 256 ) ( -895 -768 256 ) ( -896 -769 256 ) common/prototype 0 0 0 1 -1
+( -1024 -640 0 ) ( -1023 -640 0 ) ( -1024 -640 1 ) common/prototype 0 0 0 1 1
+( 1152 -768 128 ) ( 1152 -769 128 ) ( 1152 -768 129 ) common/prototype 0 0 180 1 -1
+}
+// brush 18
+{
+( -1024 -640 0 ) ( -1024 -640 1 ) ( -1024 -641 0 ) common/prototype 0 0 180 1 -1
+( -896 -896 128 ) ( -896 -896 129 ) ( -895 -896 128 ) common/prototype 0 0 0 1 1
+( -1024 -640 0 ) ( -1024 -641 0 ) ( -1023 -640 0 ) common/prototype 0 0 0 1 -1
+( -896 -768 640 ) ( -895 -768 640 ) ( -896 -769 640 ) common/prototype 0 0 0 1 -1
+( -896 -768 128 ) ( -895 -768 128 ) ( -896 -768 129 ) common/prototype 0 0 0 1 1
+( 1152 -768 128 ) ( 1152 -769 128 ) ( 1152 -768 129 ) common/prototype 0 0 180 1 -1
+}
+// brush 19
+{
+( -448 -112 0 ) ( -448 -111 0 ) ( -448 -112 1 ) common/prototype 0 0 0 1 1
+( -432 -128 0 ) ( -432 -128 1 ) ( -431 -128 0 ) common/prototype 0 0 0 1 1
+( -432 -112 0 ) ( -431 -112 0 ) ( -432 -111 0 ) common/prototype 0 0 0 1 1
+( -384 0 320 ) ( -384 1 320 ) ( -383 0 320 ) common/prototype 0 0 0 1 1
+( -384 0 16 ) ( -383 0 16 ) ( -384 0 17 ) common/prototype 0 0 0 1 1
+( -384 0 16 ) ( -384 0 17 ) ( -384 1 16 ) common/prototype 0 0 0 1 1
+}
+// brush 20
+{
+( -384 -80 304 ) ( -384 -79 304 ) ( -384 -80 305 ) common/prototype 0 0 0 1 1
+( -368 -52 320 ) ( -368 -52 321 ) ( -367 -52 320 ) common/prototype 0 0 0 1 1
+( -384 -80 312 ) ( -383 -80 312 ) ( -384 -79 312 ) common/prototype 0 0 0 1 1
+( -368 -64 316 ) ( -368 -63 316 ) ( -367 -64 316 ) common/prototype 0 0 0 1 1
+( -368 -48 320 ) ( -367 -48 320 ) ( -368 -48 321 ) common/prototype 0 0 0 1 1
+( -376 -64 320 ) ( -376 -64 321 ) ( -376 -63 320 ) common/prototype 0 0 0 1 1
+}
+// brush 21
+{
+( -380 -80 304 ) ( -380 -79 304 ) ( -380 -80 305 ) common/prototype 0 0 0 1 1
+( -376 -76 320 ) ( -376 -76 321 ) ( -375 -76 320 ) common/prototype 8 0 0 1 1
+( -392 -80 312 ) ( -391 -80 312 ) ( -392 -79 312 ) common/prototype 8 0 0 1 1
+( -376 -64 316 ) ( -376 -63 316 ) ( -375 -64 316 ) common/prototype 8 0 0 1 1
+( -376 -52 320 ) ( -375 -52 320 ) ( -376 -52 321 ) common/prototype 8 0 0 1 1
+( -376 -64 320 ) ( -376 -64 321 ) ( -376 -63 320 ) common/prototype 0 0 0 1 1
+}
+// brush 22
+{
+( -384 -80 304 ) ( -384 -79 304 ) ( -384 -80 305 ) common/prototype 0 0 0 1 1
+( -384 -80 304 ) ( -384 -80 305 ) ( -383 -80 304 ) common/prototype 0 0 0 1 1
+( -384 -80 312 ) ( -383 -80 312 ) ( -384 -79 312 ) common/prototype 0 0 0 1 1
+( -368 -64 316 ) ( -368 -63 316 ) ( -367 -64 316 ) common/prototype 0 0 0 1 1
+( -368 -76 320 ) ( -367 -76 320 ) ( -368 -76 321 ) common/prototype 0 0 0 1 1
+( -376 -64 320 ) ( -376 -64 321 ) ( -376 -63 320 ) common/prototype 0 0 0 1 1
+}
+// brush 23
+{
+( 192 144 16 ) ( 192 145 16 ) ( 192 144 17 ) common/prototype -16 16 0 1 1
+( 192 160 16 ) ( 192 160 17 ) ( 193 160 16 ) common/prototype 0 16 0 1 1
+( 192 144 16 ) ( 193 144 16 ) ( 192 145 16 ) common/prototype 0 16 0 1 1
+( 256 160 24 ) ( 256 161 24 ) ( 257 160 24 ) common/prototype 0 16 0 1 1
+( 256 192 32 ) ( 257 192 32 ) ( 256 192 33 ) common/prototype 0 16 0 1 1
+( 256 160 32 ) ( 256 160 33 ) ( 256 161 32 ) common/prototype -16 16 0 1 1
+}
+// brush 24
+{
+( 352 128 0 ) ( 352 129 0 ) ( 352 128 1 ) common/prototype 0 0 0 1 1
+( 352 128 0 ) ( 352 128 1 ) ( 353 128 0 ) common/prototype -16 0 0 1 1
+( 352 128 0 ) ( 353 128 0 ) ( 352 129 0 ) common/prototype -16 0 0 1 1
+( 416 144 16 ) ( 416 145 16 ) ( 417 144 16 ) common/prototype -16 0 0 1 1
+( 416 144 16 ) ( 417 144 16 ) ( 416 144 17 ) common/prototype -16 0 0 1 1
+( 416 144 16 ) ( 416 144 17 ) ( 416 145 16 ) common/prototype 0 0 0 1 1
+}
+// brush 25
+{
+( 352 128 0 ) ( 352 129 0 ) ( 352 128 1 ) common/prototype 0 0 0 1 1
+( 416 144 16 ) ( 416 144 17 ) ( 417 144 16 ) common/prototype -16 0 0 1 1
+( 352 128 0 ) ( 353 128 0 ) ( 352 129 0 ) common/prototype -16 0 0 1 1
+( 416 144 32 ) ( 416 145 32 ) ( 417 144 32 ) common/prototype -16 0 0 1 1
+( 416 160 16 ) ( 417 160 16 ) ( 416 160 17 ) common/prototype -16 0 0 1 1
+( 416 144 16 ) ( 416 144 17 ) ( 416 145 16 ) common/prototype 0 0 0 1 1
+}
+// brush 26
+{
+( 352 128 0 ) ( 352 129 0 ) ( 352 128 1 ) common/prototype 0 0 0 1 1
+( 416 160 16 ) ( 416 160 17 ) ( 417 160 16 ) common/prototype -16 0 0 1 1
+( 352 128 0 ) ( 353 128 0 ) ( 352 129 0 ) common/prototype -16 0 0 1 1
+( 416 144 48 ) ( 416 145 48 ) ( 417 144 48 ) common/prototype -16 0 0 1 1
+( 416 176 16 ) ( 417 176 16 ) ( 416 176 17 ) common/prototype -16 0 0 1 1
+( 416 144 16 ) ( 416 144 17 ) ( 416 145 16 ) common/prototype 0 0 0 1 1
+}
+// brush 27
+{
+( 352 128 0 ) ( 352 129 0 ) ( 352 128 1 ) common/prototype 0 0 0 1 1
+( 416 176 16 ) ( 416 176 17 ) ( 417 176 16 ) common/prototype -16 0 0 1 1
+( 352 128 0 ) ( 353 128 0 ) ( 352 129 0 ) common/prototype -16 0 0 1 1
+( 416 144 64 ) ( 416 145 64 ) ( 417 144 64 ) common/prototype -16 0 0 1 1
+( 416 192 16 ) ( 417 192 16 ) ( 416 192 17 ) common/prototype -16 0 0 1 1
+( 416 144 16 ) ( 416 144 17 ) ( 416 145 16 ) common/prototype 0 0 0 1 1
+}
+// brush 28
+{
+( 272 128 0 ) ( 272 129 0 ) ( 272 128 1 ) common/prototype 0 0 0 1 1
+( 272 128 0 ) ( 272 128 1 ) ( 273 128 0 ) common/prototype 0 0 0 1 1
+( 272 128 0 ) ( 273 128 0 ) ( 272 129 0 ) common/prototype 0 0 0 1 1
+( 336 144 16 ) ( 336 145 16 ) ( 337 144 16 ) common/prototype 0 0 0 1 1
+( 336 160 16 ) ( 337 160 16 ) ( 336 160 17 ) common/prototype 0 0 0 1 1
+( 336 144 16 ) ( 336 144 17 ) ( 336 145 16 ) common/prototype 0 0 0 1 1
+}
+// brush 29
+{
+( 272 128 0 ) ( 272 129 0 ) ( 272 128 1 ) common/prototype 0 0 0 1 1
+( 336 160 16 ) ( 336 160 17 ) ( 337 160 16 ) common/prototype 0 0 0 1 1
+( 272 128 0 ) ( 273 128 0 ) ( 272 129 0 ) common/prototype 0 0 0 1 1
+( 336 144 32 ) ( 336 145 32 ) ( 337 144 32 ) common/prototype 0 0 0 1 1
+( 336 192 16 ) ( 337 192 16 ) ( 336 192 17 ) common/prototype 0 0 0 1 1
+( 336 144 16 ) ( 336 144 17 ) ( 336 145 16 ) common/prototype 0 0 0 1 1
+}
+// brush 30
+{
+( 128 -144 16 ) ( 128 -144 0 ) ( 128 -64 0 ) common/prototype 0 0 0 1 0.5
+( 128 -144 16 ) ( 192 -144 16 ) ( 192 -144 0 ) common/prototype 0 0 0 1 1
+( 192 -144 0 ) ( 192 -64 0 ) ( 128 -64 0 ) common/prototype 0 0 0 1 1
+( 192 -144 16 ) ( 128 -144 16 ) ( 128 -64 0 ) common/prototype 0 0 0 1 1
+( 192 -144 16 ) ( 192 -64 0 ) ( 192 -144 0 ) common/prototype 0 0 0 1 0.5
+}
+// brush 31
+{
+( 192 -144 32 ) ( 192 -144 0 ) ( 192 -64 0 ) common/prototype 0 0 0 1 1
+( 192 -144 32 ) ( 256 -144 32 ) ( 256 -144 0 ) common/prototype 0 0 0 1 2
+( 256 -144 0 ) ( 256 -64 0 ) ( 192 -64 0 ) common/prototype 0 0 0 1 1
+( 192 -64 0 ) ( 256 -64 0 ) ( 256 -144 32 ) common/prototype 0 0 0 1 1
+( 256 -144 32 ) ( 256 -64 0 ) ( 256 -144 0 ) common/prototype 0 0 0 1 1
+}
+// brush 32
+{
+( 256 -144 48 ) ( 256 -144 0 ) ( 256 -64 0 ) common/prototype 0 0 0 1 1.5
+( 256 -144 48 ) ( 320 -144 48 ) ( 320 -144 0 ) common/prototype 0 0 0 1 3
+( 320 -144 0 ) ( 320 -64 0 ) ( 256 -64 0 ) common/prototype 0 0 0 1 1
+( 320 -144 48 ) ( 256 -144 48 ) ( 256 -64 0 ) common/prototype 0 0 0 1 1
+( 320 -144 48 ) ( 320 -64 0 ) ( 320 -144 0 ) common/prototype 0 0 0 1 1.5
+}
+// brush 33
+{
+( 320 -144 64 ) ( 320 -144 0 ) ( 320 -64 0 ) common/prototype 0 0 0 1 2
+( 320 -144 64 ) ( 384 -144 64 ) ( 384 -144 0 ) common/prototype 0 0 0 1 4
+( 384 -144 0 ) ( 384 -64 0 ) ( 320 -64 0 ) common/prototype 0 0 0 1 1
+( 320 -64 0 ) ( 384 -64 0 ) ( 384 -144 64 ) common/prototype 0 0 0 1 1
+( 384 -144 64 ) ( 384 -64 0 ) ( 384 -144 0 ) common/prototype 0 0 0 1 2
+}
+// brush 34
+{
+( 384 -144 80 ) ( 384 -144 0 ) ( 384 -64 0 ) common/prototype 0 0 0 1 1
+( 384 -144 80 ) ( 448 -144 80 ) ( 448 -144 0 ) common/prototype 0 0 0 1 1
+( 448 -144 0 ) ( 448 -64 0 ) ( 384 -64 0 ) common/prototype 0 0 0 1 1
+( 448 -144 80 ) ( 384 -144 80 ) ( 384 -64 0 ) common/prototype 0 0 0 1 1
+( 448 -144 80 ) ( 448 -64 0 ) ( 448 -144 0 ) common/prototype 0 0 0 1 1
+}
+// brush 35
+{
+( 448 -144 96 ) ( 448 -144 0 ) ( 448 -64 0 ) common/__TB_empty 0 0 0 1 1
+( 448 -144 96 ) ( 512 -144 96 ) ( 512 -144 0 ) common/__TB_empty 0 0 0 1 1
+( 512 -144 0 ) ( 512 -64 0 ) ( 448 -64 0 ) common/__TB_empty 0 0 0 1 1
+( 448 -64 0 ) ( 512 -64 0 ) ( 512 -144 96 ) common/__TB_empty 0 0 0 1 1
+( 512 -144 96 ) ( 512 -64 0 ) ( 512 -144 0 ) common/__TB_empty 0 0 0 1 1
+}
+// brush 36
+{
+( 512 -144 112 ) ( 512 -144 0 ) ( 512 -64 0 ) common/__TB_empty 0 0 0 1 1
+( 512 -144 112 ) ( 576 -144 112 ) ( 576 -144 0 ) common/__TB_empty 0 0 0 1 1
+( 576 -144 0 ) ( 576 -64 0 ) ( 512 -64 0 ) common/__TB_empty 0 0 0 1 1
+( 512 -64 0 ) ( 576 -64 0 ) ( 576 -144 112 ) common/__TB_empty 0 0 0 1 1
+( 576 -144 112 ) ( 576 -64 0 ) ( 576 -144 0 ) common/__TB_empty 0 0 0 1 1
+}
+// brush 37
+{
+( 448 -144 80 ) ( 448 -143 80 ) ( 448 -144 81 ) common/clip 0 0 0 1 1 0 1 0
+( 480 -144 80 ) ( 480 -144 81 ) ( 481 -144 80 ) common/clip 0 0 0 1 1 0 1 0
+( 480 -144 80 ) ( 481 -144 80 ) ( 480 -143 80 ) common/clip 0 0 0 1 1 0 1 0
+( 576 -96 128 ) ( 576 -95 128 ) ( 577 -96 128 ) common/clip 0 0 0 1 1 0 1 0
+( 576 -96 96 ) ( 577 -96 96 ) ( 576 -96 97 ) common/clip 0 0 0 1 1 0 1 0
+( 576 -96 96 ) ( 576 -96 97 ) ( 576 -95 96 ) common/clip 0 0 0 1 1 0 1 0
+}
+// brush 38
+{
+( -64 -176 0 ) ( -64 -175 0 ) ( -64 -176 1 ) common/prototype 0 0 0 1 1
+( -64 -368 0 ) ( -64 -368 1 ) ( -63 -368 0 ) common/prototype 0 0 0 1 1
+( -64 -176 0 ) ( -63 -176 0 ) ( -64 -175 0 ) common/prototype 0 0 0 1 1
+( 112 -160 176 ) ( 112 -159 176 ) ( 113 -160 176 ) common/prototype 0 0 0 1 1
+( 112 -144 16 ) ( 113 -144 16 ) ( 112 -144 17 ) common/prototype 0 0 0 1 1
+( 576 -160 16 ) ( 576 -160 17 ) ( 576 -159 16 ) common/prototype 0 0 0 1 1
+}
+// brush 39
+{
+( -80 -240 0 ) ( -80 -239 0 ) ( -80 -240 1 ) common/prototype 0 0 0 1 1
+( -80 -240 0 ) ( -80 -240 1 ) ( -79 -240 0 ) common/prototype 0 0 0 1 1
+( -80 -240 0 ) ( -79 -240 0 ) ( -80 -239 0 ) common/prototype 0 0 0 1 1
+( -64 -192 16 ) ( -64 -191 16 ) ( -63 -192 16 ) common/prototype 0 0 0 1 1
+( -64 -192 16 ) ( -63 -192 16 ) ( -64 -192 17 ) common/prototype 0 0 0 1 1
+( -64 -192 16 ) ( -64 -192 17 ) ( -64 -191 16 ) common/prototype 0 0 0 1 1
+}
+// brush 40
+{
+( -208 -240 0 ) ( -208 -239 0 ) ( -208 -240 1 ) common/prototype 0 0 0 1 1
+( -208 -240 0 ) ( -208 -240 1 ) ( -207 -240 0 ) common/prototype 0 0 0 1 1
+( -208 -240 0 ) ( -207 -240 0 ) ( -208 -239 0 ) common/prototype 0 0 0 1 1
+( -192 -192 16 ) ( -192 -191 16 ) ( -191 -192 16 ) common/prototype 0 0 0 1 1
+( -192 -192 16 ) ( -191 -192 16 ) ( -192 -192 17 ) common/prototype 0 0 0 1 1
+( -192 -192 16 ) ( -192 -192 17 ) ( -192 -191 16 ) common/prototype 0 0 0 1 1
+}
+// brush 41
+{
+( -448 -464 336 ) ( -448 -128 0 ) ( -448 -128 336 ) common/prototype 0 0 0 1 1
+( -288 -464 336 ) ( -448 -464 0 ) ( -448 -464 336 ) common/prototype 0 0 0 1 1
+( -288 -240 0 ) ( -448 -464 0 ) ( -288 -464 0 ) common/prototype 0 0 0 1 1
+( -288 -240 336 ) ( -448 -128 336 ) ( -384 -128 336 ) common/prototype 0 0 0 1 1
+( -384 -128 336 ) ( -448 -128 0 ) ( -384 -128 0 ) common/prototype 0 0 0 1 1
+( -288 -240 336 ) ( -384 -128 0 ) ( -288 -240 0 ) common/prototype 0 0 0 1 1
+( -288 -240 336 ) ( -288 -464 0 ) ( -288 -464 336 ) common/prototype 0 0 0 1 1
+}
+// brush 42
+{
+( -288 -464 0 ) ( -288 -463 0 ) ( -288 -464 1 ) common/prototype 0 0 0 1 1
+( -64 -464 0 ) ( -64 -464 1 ) ( -63 -464 0 ) common/prototype 0 0 0 1 1
+( -64 -464 0 ) ( -63 -464 0 ) ( -64 -463 0 ) common/prototype 0 0 0 1 1
+( 16 -240 336 ) ( 16 -239 336 ) ( 17 -240 336 ) common/prototype 0 0 0 1 1
+( 16 -240 16 ) ( 17 -240 16 ) ( 16 -240 17 ) common/prototype 0 0 0 1 1
+( 16 -240 16 ) ( 16 -240 17 ) ( 16 -239 16 ) common/prototype 0 0 0 1 1
 }
 }
 // entity 1
 {
 "classname" "info_location"
-"origin" "-224 120 40"
+"origin" "-224 96 56"
 "targetname" "ladder_a"
 }
 // entity 2
 {
 "classname" "info_location"
-"origin" "-224 120 296"
+"origin" "-224 96 296"
 "targetname" "ladder_a"
 }
 // entity 3
@@ -202,8 +439,95 @@
 "classname" "text_interaction"
 "origin" "0 88 8"
 "text" "Props & Items"
+"visible" "true"
 }
 // entity 6
+{
+"classname" "text_interaction"
+"origin" "-304 72 8"
+"text" "Ladder"
+"visible" "true"
+}
+// entity 7
+{
+"classname" "text_interaction"
+"origin" "288 88 8"
+"text" "StepUp"
+"visible" "true"
+}
+// entity 8
+{
+"classname" "text_interaction"
+"origin" "-224 72 120"
+"text" "Interact"
+"targetname" "ladder_a"
+}
+// entity 9
+{
+"classname" "facing_point"
+"origin" "-224 176 272"
+"targetname" "ladder_a"
+}
+// entity 10
+{
+"classname" "scriptor"
+"origin" "-376 -120 184"
+"class" "TwoWayLadderScript"
+"target" "ladder_b"
+}
+// entity 11
+{
+"classname" "info_location"
+"origin" "-352 -64 8"
+"targetname" "ladder_b"
+}
+// entity 12
+{
+"classname" "info_location"
+"origin" "-352 -64 360"
+"targetname" "ladder_b"
+}
+// entity 13
+{
+"classname" "text_interaction"
+"origin" "-344 -64 184"
+"targetname" "ladder_b"
+"text" "interact b"
+}
+// entity 14
+{
+"classname" "facing_point"
+"origin" "-440 -64 328"
+"targetname" "ladder_b"
+}
+// entity 15
+{
+"classname" "text_interaction"
+"origin" "352 -136 136"
+"text" "Slopes"
+"visible" "true"
+}
+// entity 16
+{
+"classname" "text_interaction"
+"origin" "-64 -136 8"
+"text" "Trigger Targeting"
+"visible" "true"
+}
+// entity 17
+{
+"classname" "trigger_ent"
+// brush 0
+{
+( -176 -224 0 ) ( -176 -223 0 ) ( -176 -224 1 ) common/trigger 0 0 0 1 1
+( -192 -224 0 ) ( -192 -224 1 ) ( -191 -224 0 ) common/trigger 0 0 0 1 1
+( -192 -224 0 ) ( -191 -224 0 ) ( -192 -223 0 ) common/trigger 0 0 0 1 1
+( -96 -160 80 ) ( -96 -159 80 ) ( -95 -160 80 ) common/trigger 0 0 0 1 1
+( -96 -160 16 ) ( -95 -160 16 ) ( -96 -160 17 ) common/trigger 0 0 0 1 1
+( -96 -160 16 ) ( -96 -160 17 ) ( -96 -159 16 ) common/trigger 0 0 0 1 1
+}
+}
+// entity 18
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"
@@ -266,29 +590,28 @@
 ( 5632 -2864 -3056 ) ( 5632 -2864 -3040 ) ( 5632 3040 -3056 ) sky/sky 0 0 0 1 1 0 1 0
 }
 }
-// entity 7
+// entity 19
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"
 "_tb_name" "entities"
 "_tb_id" "12"
 "_tb_layer_sort_index" "1"
-"_tb_layer_locked" "1"
 }
-// entity 8
+// entity 20
 {
 "classname" "debug"
-"origin" "-8 -216 120"
+"origin" "-8 -8 376"
 "console" "1"
 "_tb_layer" "12"
 }
-// entity 9
+// entity 21
 {
 "classname" "info_player_start"
 "origin" "0 0 32"
 "_tb_layer" "12"
 }
-// entity 10
+// entity 22
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"
@@ -297,18 +620,33 @@
 "_tb_layer_sort_index" "2"
 "_tb_layer_locked" "1"
 }
-// entity 11
+// entity 23
 {
 "classname" "trigger_ent"
 "targetname" "ladder_a"
 "_tb_layer" "13"
 // brush 0
 {
-( -240 112 0 ) ( -240 113 0 ) ( -240 112 1 ) common/trigger 0 0 0 1 1 0 1 0
-( -240 96 0 ) ( -240 96 1 ) ( -239 96 0 ) common/trigger 0 0 0 1 1 0 1 0
-( -240 112 0 ) ( -239 112 0 ) ( -240 113 0 ) common/trigger 0 0 0 1 1 0 1 0
-( -208 128 272 ) ( -208 129 272 ) ( -207 128 272 ) common/trigger 0 0 0 1 1 0 1 0
-( -208 144 16 ) ( -207 144 16 ) ( -208 144 17 ) common/trigger 0 0 0 1 1 0 1 0
-( -208 128 16 ) ( -208 128 17 ) ( -208 129 16 ) common/trigger 0 0 0 1 1 0 1 0
+( -240 112 0 ) ( -240 113 0 ) ( -240 112 1 ) common/trigger 0 0 0 1 1 0 0 0
+( -240 96 0 ) ( -240 96 1 ) ( -239 96 0 ) common/trigger 0 0 0 1 1 0 0 0
+( -240 112 0 ) ( -239 112 0 ) ( -240 113 0 ) common/trigger 0 0 0 1 1 0 0 0
+( -208 128 272 ) ( -208 129 272 ) ( -207 128 272 ) common/trigger 0 0 0 1 1 0 0 0
+( -208 128 16 ) ( -207 128 16 ) ( -208 128 17 ) common/trigger 0 0 0 1 1 0 0 0
+( -208 128 16 ) ( -208 128 17 ) ( -208 129 16 ) common/trigger 0 0 0 1 1 0 0 0
+}
+}
+// entity 24
+{
+"classname" "trigger_ent"
+"targetname" "ladder_b"
+"_tb_layer" "13"
+// brush 0
+{
+( -384 -80 0 ) ( -384 -79 0 ) ( -384 -80 1 ) common/trigger 0 0 0 1 1
+( -384 -80 0 ) ( -384 -80 1 ) ( -383 -80 0 ) common/trigger 0 0 0 1 1
+( -384 -80 0 ) ( -383 -80 0 ) ( -384 -79 0 ) common/trigger 0 0 0 1 1
+( -368 -48 336 ) ( -368 -47 336 ) ( -367 -48 336 ) common/trigger 0 0 0 1 1
+( -368 -48 16 ) ( -367 -48 16 ) ( -368 -48 17 ) common/trigger 0 0 0 1 1
+( -352 -48 16 ) ( -352 -48 17 ) ( -352 -47 16 ) common/trigger 0 0 0 1 1
 }
 }

@@ -2,9 +2,10 @@ package io.rebelengine.Commands;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import io.rebelengine.DebugCommand;
-import io.rebelengine.DebugContext;
-import io.rebelengine.DebugRenderContext;
+import io.rebelengine.Debugging.DebugCommand;
+import io.rebelengine.Debugging.DebugContext;
+import io.rebelengine.Debugging.DebugRenderContext;
+import io.rebelengine.Systems.ScriptingSystem;
 
 public class StatsCommand implements DebugCommand {
     private static final float STATS_X = 100f;
@@ -31,9 +32,12 @@ public class StatsCommand implements DebugCommand {
         }
 
         String statsText = "FPS: " + Gdx.graphics.getFramesPerSecond();
+        String statsInitiators = "\nINITIATORS : " + context.engine().ASHLEY.getSystem(ScriptingSystem.class).get_initatorCount();
+        statsText += statsInitiators;
+        
         renderContext.glyphLayout().setText(renderContext.uiFont(), statsText);
 
-        float statsY = renderContext.uiViewport().getScreenHeight() - STATS_Y_OFFSET;
+        float statsY = renderContext.uiViewport().getScreenHeight() - STATS_Y_OFFSET * 2f;
 
         renderContext.shapeRenderer().setProjectionMatrix(renderContext.uiViewport().getCamera().combined);
         renderContext.shapeRenderer().begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled);

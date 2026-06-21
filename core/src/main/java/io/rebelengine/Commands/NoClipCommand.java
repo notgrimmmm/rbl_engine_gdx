@@ -1,10 +1,10 @@
 package io.rebelengine.Commands;
 
-import io.rebelengine.DebugCommand;
-import io.rebelengine.DebugContext;
-import io.rebelengine.DebugRenderContext;
-import io.rebelengine.GameContext;
-import io.rebelengine.InputFocus;
+import io.rebelengine.Debugging.DebugCommand;
+import io.rebelengine.Debugging.DebugContext;
+import io.rebelengine.Debugging.DebugRenderContext;
+import io.rebelengine.EngineContext;
+import io.rebelengine.Helpers.InputFocus;
 
 /**
  * Toggles free-fly "noclip" mode.
@@ -29,10 +29,10 @@ public class NoClipCommand implements DebugCommand {
         context.debugState().noclip = enabling;
 
         if (enabling) {
-            GameContext.get().set_activeCamera(GameContext.get().get_noclip_camera());
+            EngineContext.get().set_activeCamera(EngineContext.get().get_noclip_camera());
             InputFocus.setLocked(true);
         } else {
-            GameContext.get().set_activeCamera(null); // null routes to player camera
+            EngineContext.get().set_activeCamera(null); // null routes to player camera
             InputFocus.setLocked(false);
         }
 

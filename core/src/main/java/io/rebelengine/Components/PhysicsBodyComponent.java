@@ -33,6 +33,8 @@ public class PhysicsBodyComponent implements Component {
     public BSPCollision.TraceResult traceResult = new BSPCollision.TraceResult();
     
     public int bspModelIndexReference = -1; // refer to the instance component if there is one
+    public boolean ignore_physics_transformations = false;
+    public float roll_sign = 1f;
     
     
 }

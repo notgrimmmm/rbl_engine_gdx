@@ -1,4 +1,6 @@
-package io.rebelengine;
+package io.rebelengine.Debugging;
+
+import io.rebelengine.RebelEngineBase;
 
 public class DebugContext {
     private final RebelEngineBase engine;

@@ -1,5 +1,6 @@
 package io.rebelengine;
 
+import io.rebelengine.Helpers.InputFocus;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
