@@ -8,9 +8,22 @@ import io.rebelengine.DYNRenderer;
  * engine helper utilities
  */
 public class Utils_Misc {
+    /**
+     * @param s origin property
+     * @return - vector3 with opengl world axis coordindates xyz
+     */
     public static Vector3 parseVector3(String s) {
         String[] p = s.split(" ");
         return new Vector3(Float.parseFloat(p[0]), Float.parseFloat(p[2]), -Float.parseFloat(p[1]));
+    }
+    
+    /**
+     * @param s origin property
+     * @return - vector3 from with trenchbroom world axis coordinates xzy
+     */
+    public static Vector3 parseVec3TB(String s) {
+        String[] p = s.split(" ");
+        return new Vector3(Float.parseFloat(p[0]), Float.parseFloat(p[1]), Float.parseFloat(p[2]));
     }
     
     public static DYNRenderer.RenderInstance createRenderInstance(String model, DYNRenderer renderer, BSPFile BSP){

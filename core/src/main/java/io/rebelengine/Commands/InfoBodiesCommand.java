@@ -95,13 +95,15 @@ public class InfoBodiesCommand implements DebugCommand {
             Vector3 n = physics.traceResult.normal;
             Entity hitEnt = physics.traceResult.hitEntity;
             boolean startSolid = physics.traceResult.startSolid;
+            String texhit = physics.traceResult.texture_hit;
             
             renderContext.uiFont().draw(renderContext.uiBatch(),    "trace result fraction [" + trace + "]" + "\n" +
                                                                     "velocity [" + bodyVel +"]"     + "\n" +
                                                                     "normal [" +  n  + "]" + "\n" +
                                                                     "nonsolidOverlaps [" + arr + "]" + "\n" +
                                                                     "hitentity [" + hitEnt + "]" + "\n" +
-                                                                    "start solid [" + startSolid + "]",
+                                                                    "start solid [" + startSolid + "]" + "\n" +
+                                                                    "texture hit [" + texhit + "]",
                     screenCoords.x, screenCoords.y);
         }
         

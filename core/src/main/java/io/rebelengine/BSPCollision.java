@@ -43,6 +43,9 @@ public class BSPCollision {
         public boolean allSolid   = false;
 
         public Entity hitEntity = null;
+        
+        public String texture_hit = "";
+        public String texture_own = "";
 
         public Array<Integer> nonSolidOverlapIndices = new Array<>(false, 4); // collect brush index of non solid to compare later
 
@@ -113,7 +116,7 @@ public class BSPCollision {
         for (int bi = 0; bi < world.numBrushes; bi++) {
             BSPFile.Brush brush = bsp.brushes[world.firstBrush + bi];
             if (!isSolid(brush)) continue;
-
+            
             traceThroughBrush(brush, start, end, mins, maxs, result);
             if (result.allSolid) return;
         }
@@ -221,6 +224,7 @@ public class BSPCollision {
             if (enterFrac > -1f && enterFrac < result.fraction) {
                 result.fraction = Math.max(0f, enterFrac);
                 result.normal.set(clipNormal);
+                result.texture_hit = bsp.textures[brush.textureIndex].name;
             }
         }
     }

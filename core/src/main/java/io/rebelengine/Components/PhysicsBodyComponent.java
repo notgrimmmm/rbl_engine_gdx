@@ -19,6 +19,7 @@ public class PhysicsBodyComponent implements Component {
     public float stepHeight = 18f;
     public float eyeStand = 48f;
     public float eyeCrouch = 20f;
+    public float slopeCoeff = 0.7f;
 
     public boolean grounded;
     public boolean crouching;
@@ -35,6 +36,7 @@ public class PhysicsBodyComponent implements Component {
     public int bspModelIndexReference = -1; // refer to the instance component if there is one
     public boolean ignore_physics_transformations = false;
     public float roll_sign = 1f;
+    public Vector3 velocity_impact_threshold = new Vector3(30, 220, 310);
     
     
 }

@@ -25,6 +25,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import games.rednblack.miniaudio.MiniAudio;
 import io.game.Interactables.Prop;
+import io.game.Interactables.Scripted;
 import io.game.Scripts.Player_InitiatorTriggeringScript;
 import io.game.Scripts.Player_PropsInteractionScript;
 import io.rebelengine.Instances.SFX;
@@ -228,8 +229,28 @@ public class RebelEngineBase implements Disposable{
                 BSPFile.Model bModel = BSP.models[instance.bmIndex];
                 Prop prop = new Prop(instance, bModel, instance.position);
                 prop.add(new ScriptComponent());
+                prop.body.velocity_impact_threshold.set(Utils_Misc.parseVec3TB(physics_prop.get("impact_threshold")));
+                
                 ASHLEY.addEntity(prop);
                 DYN_RENDERER.instances.add(instance);
+            }
+        }
+        // scriptables
+        List<BSPEntities.Entity> physics_scriptable_list = parsedEntities.byClass.get("physics_scriptable");
+        if (physics_scriptable_list != null){
+            for (BSPEntities.Entity physics_scriptable : physics_scriptable_list){
+                DYNRenderer.RenderInstance instance = Utils_Misc.createRenderInstance(physics_scriptable.get("model"), DYN_RENDERER, BSP);
+                BSPFile.Model bModel = BSP.models[instance.bmIndex];
+                Scripted scripted = new Scripted(instance, bModel, instance.position);
+                scripted.add(new ScriptComponent());
+                scripted.body.gravity = 0f;
+                
+                ASHLEY.addEntity(scripted);
+                DYN_RENDERER.instances.add(instance);
+                
+                if (physics_scriptable.get("targetname") != null){
+                    EngineContext.get().add_groupComponent(physics_scriptable.get("targetname"), scripted);
+                }
             }
         }
 
@@ -250,6 +271,11 @@ public class RebelEngineBase implements Disposable{
                 Info_Entity.Trigger trigger = new Info_Entity.Trigger();
                 trigger.center = center;
                 EngineContext.get().add_trigger(bmIndex, trigger);
+                
+                if (trigger_ent.get("sleep") != null && !trigger_ent.get("sleep").isBlank())
+                {
+                    trigger.sleep = true;
+                }
 
                 if (trigger_ent.get("targetname") != null){
                     String group_tag = trigger_ent.get("targetname");
@@ -260,6 +286,11 @@ public class RebelEngineBase implements Disposable{
                 if (trigger_ent.get("target") != null){
                     String target_tag = trigger_ent.get("target");
                     trigger.target_tag = target_tag;
+                }
+                
+                if (trigger_ent.get("T_target") != null){
+                    String T_target = trigger_ent.get("T_target");
+                    trigger.T_target = T_target;
                 }
                 
                 if (trigger_ent.get("initiator") != null && !trigger_ent.get("initiator").isBlank()){

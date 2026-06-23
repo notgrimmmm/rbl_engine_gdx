@@ -71,7 +71,11 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
                 if (!body.ignore_physics_transformations){
                     body.roll_sign *= MathUtils.randomSign();
                     if (transform.currentYaw != 0 && transform.currentPitch != 0){
+                        // doing wants and crouch makes a little bounce which is nice
+                        // only doing wantscrouch sometimes doesnt change the aabb
                         body.wantsCrouch = true;
+                        body.crouching = true;
+                        
                         transform.currentPitch = transform.currentPitch < 0 ? -90f : 90f;
                         // do yaw ?
                     }
@@ -203,14 +207,24 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
             }
             
             // sound impact 
+            // FIX: way too much nesting
             if (tr.fraction < 1.0f){
                 float impactVel = Math.abs(velocity.dot(tr.normal));
-                
-                if (impactVel > 100f){
-                    if (tr.hitEntity != null){
-                    }else{
-                        // play sound
-                        new SFX("pwr_click_reverb").play3d(position, 300f);
+                PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
+                if (!body.ignore_physics_transformations){
+                    if (impactVel > body.velocity_impact_threshold.x 
+                            && impactVel < body.velocity_impact_threshold.y 
+                            && impactVel < body.velocity_impact_threshold.z){ // low impact
+
+                        System.out.println("low impact: " + impactVel + " threshold : " + body.velocity_impact_threshold);
+                    }
+                    if (impactVel > body.velocity_impact_threshold.y && impactVel < body.velocity_impact_threshold.z){// medium impact
+
+                        System.out.println("med impact: " + impactVel + " threshold : " + body.velocity_impact_threshold);
+                    }        
+                    if (impactVel >= body.velocity_impact_threshold.z ){// high impact
+
+                        System.out.println("high impact: " + impactVel + " threshold : " + body.velocity_impact_threshold);
                     }
                 }
             }
@@ -233,10 +247,11 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
     }
 
     private boolean isOnGround(Entity entity, Vector3 position, Vector3 mins, Vector3 maxs, BSPCollision.TraceResult result) {
+        PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
         Vector3 down = new Vector3(position).sub(0, 0.25f, 0);
         result.reset();
         traceBox(entity, position, down, mins, maxs, result);
-        return (result.fraction < 1f || result.startSolid) && result.normal.y > 0.7f;
+        return (result.fraction < 1f || result.startSolid) && result.normal.y > body.slopeCoeff;
     }
 
     private void tryStepUp(Entity entity, Vector3 position, Vector3 velocity, Vector3 mins, Vector3 maxs,

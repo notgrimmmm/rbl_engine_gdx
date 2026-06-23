@@ -5,12 +5,10 @@
 package io.game.Scripts;
 
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.IntMap;
 import io.rebelengine.Components.EntityScript;
 import io.rebelengine.Components.PhysicsBodyComponent;
-import io.rebelengine.Components.TransformComponent;
 import io.rebelengine.Helpers.EntityFlags;
 import io.rebelengine.EngineContext;
 import io.rebelengine.Helpers.Info_Entity;
