@@ -1,10 +1,14 @@
 package io.rebelengine;
 
-import io.rebelengine.Helpers.LightGridManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
+import com.badlogic.gdx.graphics.g3d.Model;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
+import com.badlogic.gdx.graphics.g3d.model.Node;
+import com.badlogic.gdx.graphics.g3d.model.NodePart;
+import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -20,6 +24,8 @@ public class DYNRenderer implements Disposable {
     
     private final Map<String, Array<BrushBatch>> brushLibrary = new HashMap<>();
     private final Map<Integer, Texture> textureLibrary = new HashMap<>();
+    private final Array<Model> glbModelsToDispose = new Array<>();
+
     private Texture[] lightmapTextures = new Texture[0];
     private Texture whiteLightmap;
     private Texture checkerTexture;
@@ -28,6 +34,7 @@ public class DYNRenderer implements Disposable {
     // Reusable objects to prevent garbage collection spikes
     private final Matrix4 modelTransform = new Matrix4();
     private final Matrix4 combinedMatrix = new Matrix4();
+    private final Matrix3 normalMatrix = new Matrix3();
 
     public DYNRenderer(EngineShader shader, String texturebase){
         this.SHADER = shader;
@@ -47,6 +54,7 @@ public class DYNRenderer implements Disposable {
         Texture texture;
         Texture lightmap;
         boolean hasLightmap;
+        boolean isGlbMesh; // Tracks if mesh was provided by GLB model vs generated BSP mesh
     }
 
     public void addBrush(String key, BSPFile.Model bModel, BSPFile bsp) {
@@ -56,6 +64,45 @@ public class DYNRenderer implements Disposable {
         Array<BrushBatch> batches = buildBatchesFromModel(bModel, bsp);
         if (batches.size > 0) {
             brushLibrary.put(key, batches);
+        }
+    }
+
+    public void addGlbModel(String key, Model glbModel) {
+        if (brushLibrary.containsKey(key)) return;
+
+        Array<BrushBatch> batches = new Array<>();
+        glbModelsToDispose.add(glbModel);
+
+        for (Node node : glbModel.nodes) {
+            extractGlbBatches(node, batches);
+        }
+
+        if (batches.size > 0) {
+            brushLibrary.put(key, batches);
+        }
+    }
+
+    private void extractGlbBatches(Node node, Array<BrushBatch> batches) {
+        for (NodePart part : node.parts) {
+            BrushBatch batch = new BrushBatch();
+            batch.mesh = part.meshPart.mesh;
+            batch.isGlbMesh = true;
+
+            if (part.material.has(TextureAttribute.Diffuse)) {
+                TextureAttribute texAttr = (TextureAttribute) part.material.get(TextureAttribute.Diffuse);
+                batch.texture = texAttr.textureDescription.texture;
+            } else {
+                batch.texture = getOrCreateCheckerTexture();
+            }
+
+            batch.lightmap = getOrCreateWhiteLightmap();
+            batch.hasLightmap = false;
+
+            batches.add(batch);
+        }
+
+        for (Node child : node.getChildren()) {
+            extractGlbBatches(child, batches);
         }
     }
 
@@ -72,8 +119,6 @@ public class DYNRenderer implements Disposable {
         Map<Long, List<Short>> idxMap = new HashMap<>();
         Vector3 modelCenter = getModelCenter(bModel);
 
-        // BSP brush-model vertices are stored in world space. Dynamic instances
-        // need local vertices so their transform can be their world position.
         for (int i = 0; i < bModel.numFaces; i++) {
             BSPFile.Face face = bsp.faces[bModel.firstFace + i];
             int texIdx = face.textureIndex;
@@ -127,6 +172,7 @@ public class DYNRenderer implements Disposable {
             batch.lightmap = (lmIdx >= 0 && lmIdx < lightmapTextures.length)
                     ? lightmapTextures[lmIdx] : getOrCreateWhiteLightmap();
             batch.hasLightmap = batch.lightmap != whiteLightmap;
+            batch.isGlbMesh = false;
             batches.add(batch);
         }
         return batches;
@@ -147,9 +193,7 @@ public class DYNRenderer implements Disposable {
 
     private Texture loadTexture(int texIdx, BSPFile bsp) {
         Texture cached = textureLibrary.get(texIdx);
-        if (cached != null) {
-            return cached;
-        }
+        if (cached != null) return cached;
 
         String textureName = bsp.textures[texIdx].name;
         for (String ext : new String[]{".tga", ".png", ".jpg"}) {
@@ -166,9 +210,7 @@ public class DYNRenderer implements Disposable {
     }
 
     private void ensureLightmaps(BSPFile bsp) {
-        if (lightmapTextures.length > 0 || bsp.lightmaps == null) {
-            return;
-        }
+        if (lightmapTextures.length > 0 || bsp.lightmaps == null) return;
 
         lightmapTextures = new Texture[bsp.lightmaps.length];
         for (int i = 0; i < bsp.lightmaps.length; i++) {
@@ -228,11 +270,11 @@ public class DYNRenderer implements Disposable {
         SHADER.bind();
         
         for (RenderInstance inst : instances) {
-            Color lightC = LightGridManager.getAmbientAt(inst.position.x, inst.position.y, inst.position.z);
-            inst.lightGridColor.set(lightC.r, lightC.g, lightC.b);
-            
             Array<BrushBatch> batches = brushLibrary.get(inst.meshKey);
             if (batches == null) continue;
+            
+            //Color lightC = LightGridManager.getAmbientAt(inst.position.x, inst.position.y, inst.position.z);
+            inst.lightGridColor.set(0.5f, 0.5f, 0.5f);
 
             // reuse modelTransform matrix
             modelTransform.setToTranslation(inst.position);
@@ -240,11 +282,16 @@ public class DYNRenderer implements Disposable {
             modelTransform.rotate(Vector3.X, inst.rotation.x);
             modelTransform.rotate(Vector3.Z, inst.rotation.z);
 
+            // compute normal matrix for GLB model orientation
+            normalMatrix.set(modelTransform).inv().transpose();
+
             // reuse combinedMatrix
             combinedMatrix.set(camera.combined).mul(modelTransform);
 
             SHADER.setMVP(combinedMatrix);
-            SHADER.setLightGridColor(inst.lightGridColor.x, inst.lightGridColor.y, inst.lightGridColor.z);
+            SHADER.setModel(modelTransform);
+            SHADER.setNormalMatrix(normalMatrix);
+            SHADER.setLightGridColor(inst.lightGridColor.x, inst.lightGridColor.y, inst.lightGridColor.z); // ambient
 
             for (BrushBatch batch : batches) {
                 Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
@@ -255,6 +302,8 @@ public class DYNRenderer implements Disposable {
                 Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
                 SHADER.setHasLightmap(batch.hasLightmap ? 1f : 0f);
+                SHADER.setUseNormalShading(batch.isGlbMesh); // Active Lambertian ONLY on GLB meshes
+
                 batch.mesh.render(SHADER.getProgram(), GL20.GL_TRIANGLES);
             }
         }
@@ -264,7 +313,9 @@ public class DYNRenderer implements Disposable {
     public void dispose() {
         for (Array<BrushBatch> batches : brushLibrary.values()) {
             for (BrushBatch batch : batches) {
-                if (batch.mesh != null) batch.mesh.dispose();
+                if (batch.mesh != null && !batch.isGlbMesh) {
+                    batch.mesh.dispose();
+                }
             }
         }
         for (Texture t : textureLibrary.values()) t.dispose();
@@ -273,6 +324,12 @@ public class DYNRenderer implements Disposable {
         }
         if (whiteLightmap != null) whiteLightmap.dispose();
         if (checkerTexture != null) checkerTexture.dispose();
+
+        for (Model m : glbModelsToDispose) {
+            m.dispose();
+        }
+        glbModelsToDispose.clear();
+
         brushLibrary.clear();
         textureLibrary.clear();
     }

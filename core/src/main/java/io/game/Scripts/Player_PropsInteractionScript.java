@@ -6,6 +6,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Timer;
 import io.game.Interactables.Prop;
 import io.rebelengine.BSPCollision;
 import io.rebelengine.Components.EntityScript;
@@ -42,7 +43,7 @@ public class Player_PropsInteractionScript implements EntityScript{
     private final Vector3 grabRight = new Vector3();
 
     @Override
-    public void update_fixed() {
+    public void update_fixed(float fixedDt) {
         BSPCollision.TraceResult rayResult = new BSPCollision.TraceResult();
         Vector3 start = EngineContext.get().get_activeCamera().position;
         Vector3 dir = EngineContext.get().get_activeCamera().direction;
@@ -92,8 +93,8 @@ public class Player_PropsInteractionScript implements EntityScript{
         body.wantsCrouch = false; // all of these are needed make the body bounds to normal
         body.crouching = false;
         body.grounded = false;
-        body.noclip = true;
         body.velocity.setZero();
+        owner.getComponent(PhysicsBodyComponent.class).ignoreTarget = entity; // player ignores this prop
         grabbedEntity = entity;
         updateGrabbedEntity();
     }
@@ -122,11 +123,17 @@ public class Player_PropsInteractionScript implements EntityScript{
              * this is technically a bug, but resetting the entity back to an initiator like this should be fine as it rearms the original projectile script
              */
             grabbedEntity.getComponent(ScriptComponent.class).add(new Prop_InitiatorProjectileScript(grabbedEntity));
-            
             body.grounded = false;
         }
         grabbedEntity = null;
         builtUpForce = 1f; // reset back to default just in case
+        
+        Timer.schedule(new Timer.Task() {
+        @Override
+            public void run() {
+                owner.getComponent(PhysicsBodyComponent.class).ignoreTarget = null; // player reset ignore tag
+            }
+        }, 0.5f); // wait half a sec otherwise resolve kicks in immediately
     }
 
     private void updateGrabbedEntity() {
@@ -152,10 +159,9 @@ public class Player_PropsInteractionScript implements EntityScript{
                 .add(0f, offset.y, 0f)
                 .mulAdd(grabForward, offset.z);
 
-        body.noclip = true;
+      
         body.velocity.setZero();
-        
-        
+
         hitTransform.currentPosition.set(grabPosition); // only need current pos since interpolation system will do the rest for smoothing
         hitTransform.currentYaw = -ownerTransform.currentYaw; // set it to the facing direction a little stutter maybe to lerp ? 
     }

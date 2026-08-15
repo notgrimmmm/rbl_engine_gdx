@@ -13,6 +13,7 @@ import io.rebelengine.Components.InputControlComponent;
 import io.rebelengine.Components.MouseLookComponent;
 import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.TransformComponent;
+import io.rebelengine.Helpers.PhysicsType;
 
 public class BasePlayer {
     public static final float RADIUS = 16f;
@@ -48,7 +49,7 @@ public class BasePlayer {
         physics.eyeStand = EYE_STAND;
         physics.eyeCrouch = EYE_CROUCH;
         physics.jumpSpeed = 180f;
-        physics.ignore_physics_transformations = true;
+        physics.Physics = PhysicsType.Mutable; // mutable specifically for dynamic CONTROL of player or for scripted
 
         camera = new PerspectiveCamera(90f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 3f;

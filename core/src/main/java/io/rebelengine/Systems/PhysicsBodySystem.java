@@ -12,6 +12,7 @@ import io.rebelengine.Helpers.Utils_Collision;
 import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.TransformComponent;
 import io.rebelengine.EngineContext;
+import io.rebelengine.Helpers.PhysicsType;
 import io.rebelengine.RebelAshleyEngine;
 import io.rebelengine.Helpers.SpatialHash;
 import io.rebelengine.Instances.SFX;
@@ -19,10 +20,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine.FixedUpdatable {
-    private static final float STEP_EPSILON = 0.03125f;
+    private static final float STEP_EPSILON = 0.5f;
     private static final float STEP_MIN_RISE = 0.1f;
     private static final float STEP_PROGRESS_EPSILON = 0.01f;
-    private static final int OVERLAP_RECOVERY_STEPS = 3;
+    private static final int OVERLAP_RECOVERY_STEPS = 30;
 
     private static final Family FAMILY = Family.all(
         TransformComponent.class,
@@ -61,14 +62,14 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
             updateCrouchState(entity, transform, body);
             
             if (body.grounded){
-                body.velocity.x -= body.velocity.x * body.frictionCoeff * fixedDt;
+                body.velocity.x -= body.velocity.x * body.frictionCoeff * fixedDt; // add friction on ground and velxz is not 0
                 body.velocity.z -= body.velocity.z * body.frictionCoeff * fixedDt;
                 
-                if (Math.abs(body.velocity.x) < 0.1f) body.velocity.x = 0f;
+                if (Math.abs(body.velocity.x) < 0.1f) body.velocity.x = 0f; // vel 0
                 if (Math.abs(body.velocity.z) < 0.1f) body.velocity.z = 0f;
                 
                 //reset roll sign to new 
-                if (!body.ignore_physics_transformations){
+                if (body.Physics.equals(PhysicsType.Dynamic)){
                     body.roll_sign *= MathUtils.randomSign();
                     if (transform.currentYaw != 0 && transform.currentPitch != 0){
                         // doing wants and crouch makes a little bounce which is nice
@@ -94,13 +95,13 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
                     body.velocity.y = body.terminalVelocity;
                 }
                 
-                if (!body.ignore_physics_transformations){
+                if (body.Physics.equals(PhysicsType.Dynamic)){ // adds roll while in air / not grounded
                     float horizontalVelocity = (body.velocity.x * body.velocity.x) + (body.velocity.z * body.velocity.z);
                     float threshold = 15f;
                     if (horizontalVelocity > (threshold * threshold)){
                         transform.currentYaw += body.roll_sign;
                         transform.currentPitch += body.roll_sign;
-                    }
+                    }                  
                 }
             }
 
@@ -155,6 +156,7 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
     }
 
     public void traceBox(Entity owner, Vector3 start, Vector3 end, Vector3 mins, Vector3 maxs, BSPCollision.TraceResult result) {
+        PhysicsBodyComponent ownerBody = owner.getComponent(PhysicsBodyComponent.class); // added this for collision eveluation cehck
         
         int instanceModelIndex = owner.getComponent(PhysicsBodyComponent.class).bspModelIndexReference;
         EngineContext.get().COLLISION().traceBox(start, end, mins, maxs, result, instanceModelIndex, dynamicModelIndices);
@@ -162,6 +164,14 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
         java.util.Set<Entity> nearby = spatialHash.query(start, end, mins, maxs);
         for (Entity other : nearby) {
             if (other == owner) continue;
+            
+            // Skip collision evaluation if either entity is designated to be ignored by the other
+            PhysicsBodyComponent otherBody = other.getComponent(PhysicsBodyComponent.class);
+            if ((ownerBody != null && ownerBody.ignoreTarget == other) || 
+                (otherBody != null && otherBody.ignoreTarget == owner)) {
+                continue;
+            }
+
             float previousFraction = result.fraction;
             
             TransformComponent tOther = other.getComponent(TransformComponent.class);
@@ -191,8 +201,8 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
         for (int bump = 0; bump < 4 && timeLeft > 0; bump++) {
             end.set(position).add(velocity.x * timeLeft, velocity.y * timeLeft, velocity.z * timeLeft);
             tr.reset();
-            traceBox(entity, position, end, mins, maxs, tr);
-
+            traceBox(entity, position, end, mins, maxs, tr);            
+            
             if (tr.startSolid) {
                 blocked = true;
                 if (recoverFromOverlap(entity, position, mins, maxs, tr)) {
@@ -211,20 +221,20 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
             if (tr.fraction < 1.0f){
                 float impactVel = Math.abs(velocity.dot(tr.normal));
                 PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
-                if (!body.ignore_physics_transformations){
+                if (body.Physics.equals(PhysicsType.Dynamic)){
                     if (impactVel > body.velocity_impact_threshold.x 
                             && impactVel < body.velocity_impact_threshold.y 
                             && impactVel < body.velocity_impact_threshold.z){ // low impact
 
-                        System.out.println("low impact: " + impactVel + " threshold : " + body.velocity_impact_threshold);
+                        if (body.shortImpact != null) body.shortImpact.play3d(position, body.sfxImpactRange);
                     }
                     if (impactVel > body.velocity_impact_threshold.y && impactVel < body.velocity_impact_threshold.z){// medium impact
 
-                        System.out.println("med impact: " + impactVel + " threshold : " + body.velocity_impact_threshold);
+                        if (body.mediumImpact != null) body.mediumImpact.play3d(position, body.sfxImpactRange);
                     }        
                     if (impactVel >= body.velocity_impact_threshold.z ){// high impact
 
-                        System.out.println("high impact: " + impactVel + " threshold : " + body.velocity_impact_threshold);
+                        if (body.highImpact != null) body.highImpact.play3d(position, body.sfxImpactRange);
                     }
                 }
             }
@@ -248,9 +258,9 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
 
     private boolean isOnGround(Entity entity, Vector3 position, Vector3 mins, Vector3 maxs, BSPCollision.TraceResult result) {
         PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
-        Vector3 down = new Vector3(position).sub(0, 0.25f, 0);
+        body.downPosition.set(position).sub(0f, 0.25f, 0f);
         result.reset();
-        traceBox(entity, position, down, mins, maxs, result);
+        traceBox(entity, position, body.downPosition, mins, maxs, result);
         return (result.fraction < 1f || result.startSolid) && result.normal.y > body.slopeCoeff;
     }
 
@@ -258,7 +268,9 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
                            float stepHeight, float fixedDt, PhysicsBodyComponent body) {
         body.savedPosition.set(position);
         body.savedVelocity.set(velocity);
-
+        
+        if (body.Physics.equals(PhysicsType.Kinematic)) return; // dont do try step on kinematic bodies
+        
         boolean normalBlocked = slideMove(entity, position, velocity, mins, maxs, fixedDt);
         float normalProgress = horizontalDistance2(body.savedPosition, position);
         float intendedProgress = horizontalDistance2(0f, 0f, body.savedVelocity.x * fixedDt, body.savedVelocity.z * fixedDt);
@@ -302,13 +314,15 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
 
     private boolean recoverFromOverlap(Entity entity, Vector3 position, Vector3 mins, Vector3 maxs,
                                        BSPCollision.TraceResult trace) {
-
+        PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
+        if (body.Physics.equals(PhysicsType.Kinematic)) return true; // always return true if its kinematic
+        
         if (trace.normal.isZero()) { // this first so bodies dont get stuck on world start
             return false;
         }
 
         for (int i = 0; i < OVERLAP_RECOVERY_STEPS; i++) {
-            position.mulAdd(trace.normal, STEP_EPSILON);
+            if (body.ignoreTarget == null) position.mulAdd(trace.normal, STEP_EPSILON);
             trace.reset();
             traceBox(entity, position, position, mins, maxs, trace);
             

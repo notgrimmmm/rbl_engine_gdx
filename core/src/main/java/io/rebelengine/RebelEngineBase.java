@@ -12,7 +12,6 @@ import io.rebelengine.Helpers.EntityFlags;
 import io.rebelengine.Helpers.Info_Entity;
 import io.rebelengine.Helpers.Utils_Misc;
 import io.rebelengine.Debugging.DebuggingConsole;
-import io.game.Interactables.Item;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
@@ -20,12 +19,15 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import games.rednblack.miniaudio.MiniAudio;
 import io.game.Interactables.Prop;
 import io.game.Interactables.Scripted;
+import io.game.Interactables.ScriptedB;
 import io.game.Scripts.Player_InitiatorTriggeringScript;
 import io.game.Scripts.Player_PropsInteractionScript;
 import io.rebelengine.Instances.SFX;
@@ -47,6 +49,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
+import net.mgsx.gltf.loaders.glb.GLBLoader;
+import net.mgsx.gltf.scene3d.scene.SceneAsset;
 
 /**
  * The base engine plus utilities
@@ -160,7 +164,6 @@ public class RebelEngineBase implements Disposable{
         DYN_RENDERER = new DYNRenderer(SHADER, textureRoot);
         BSP_COLLISION = new BSPCollision(BSP);
 
-
         BSPEntities parsedEntities = BSPEntityParser.parse(BSP.entities);
 
         BSPEntities.Entity debugEnt = parsedEntities.first("debug");
@@ -182,10 +185,7 @@ public class RebelEngineBase implements Disposable{
             player_base.getEntity().add(sc);
             ASHLEY.addEntity(player_base.getEntity());
             setCamera(player_base.getCamera());
-
-            // Hand input focus to the player. The player is the default dand
-            // highest-priority input target. Other systems (vehicles, spec
-            // cameras) can call InputFocus.set(...) to take it later.
+            
             player_base.focus();
         }
         
@@ -198,30 +198,44 @@ public class RebelEngineBase implements Disposable{
                 }
             }
         }
-
-        // function brush items, things like doors
-        // they should NOT have any brushes for interaction, physics component and system scripting will do the work
-        List<BSPEntities.Entity> func_system_list = parsedEntities.byClass.get("func_item");
-        if (func_system_list != null) {
-            for (BSPEntities.Entity funcEnt : func_system_list){
-                String brushModelKey = funcEnt.get("model");
-                int bmIndex = Integer.parseInt(brushModelKey.substring(1));
-
-                BSPFile.Model bModel = BSP.models[bmIndex];
-                //System.out.println(bModel + " - " + bModel.firstFace);
-                DYN_RENDERER.addBrush(brushModelKey, bModel, BSP);
-                // 2. Create the "Instance" (The actual object in the world)
-                DYNRenderer.RenderInstance inst = new DYNRenderer.RenderInstance();
-                inst.meshKey = brushModelKey;
-                inst.bmIndex = bmIndex;
-                inst.position.set(DYNRenderer.getModelCenter(bModel));
-
-                Item item = new Item(inst, bModel, inst.position);
-                ASHLEY.addEntity(item);
-                DYN_RENDERER.instances.add(inst);
+        
+        List<BSPEntities.Entity> glb_prop_list = parsedEntities.byClass.get("glb_prop");
+        if (glb_prop_list != null){
+            for (BSPEntities.Entity glbEnt : glb_prop_list){
+                String modelString = glbEnt.get("model");
+                Vector3 origin = Utils_Misc.parseVector3(glbEnt.get("origin"));
+                SceneAsset asset = new GLBLoader().load(Gdx.files.internal("main/baseq3/" + modelString));
+                Model glbModel = asset.scene.model;
+                
+                DYNRenderer.RenderInstance instance = Utils_Misc.createGlbRenderInstance(modelString, glbModel, origin, Vector3.Zero, DYN_RENDERER);
+                
+                Prop prop = new Prop(instance, glbModel, origin);
+                prop.add(new ScriptComponent());
+                
+                ASHLEY.addEntity(prop);
+                DYN_RENDERER.instances.add(instance);
             }
         }
-
+        
+        List<BSPEntities.Entity> brush_scriptable_list = parsedEntities.byClass.get("brush_scriptable");
+        if (brush_scriptable_list != null){
+            for (BSPEntities.Entity brushEnt : brush_scriptable_list){
+                DYNRenderer.RenderInstance instance = Utils_Misc.createRenderInstance(brushEnt.get("model"), DYN_RENDERER, BSP);
+                BSPFile.Model bModel = BSP.models[instance.bmIndex];
+                
+                ScriptedB entity = new ScriptedB(instance, bModel, instance.position);
+                
+                ASHLEY.addEntity(entity);
+                DYN_RENDERER.instances.add(instance);
+                
+                if (brushEnt.get("uid") != null) entity.uid = brushEnt.get("uid");
+                if (brushEnt.get("targetname") != null){
+                    EngineContext.get().add_groupComponent(brushEnt.get("targetname"), entity);
+                }
+            }
+        }
+        
+        //TODO: change this to phyisics debris
         List<BSPEntities.Entity> physics_prop_list = parsedEntities.byClass.get("physics_prop");
         if (physics_prop_list != null){
             for (BSPEntities.Entity physics_prop : physics_prop_list){
@@ -423,7 +437,7 @@ public class RebelEngineBase implements Disposable{
         float q3z =  camera.position.y;
 
         SHADER.clearLights();
-        //SHADER.addPointLight(0, 32f, 0, 1, 1, 1, 300f); // weird against dyn instances
+        SHADER.addSpotLight(camera.position, 100f, camera.direction, Color.WHITE, 95);
         SHADER.bind();
 
         EngineContext.get().AUDIO().setListenerPosition(camera.position.x, camera.position.y, camera.position.z);

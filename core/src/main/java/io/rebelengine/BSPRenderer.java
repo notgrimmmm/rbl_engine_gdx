@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.*;
 
 import java.util.ArrayList;
@@ -25,6 +26,8 @@ public class BSPRenderer implements Disposable {
 
     private final int[]     visibleFaces = new int[MAX_FACES];
     private final boolean[] faceStamp    = new boolean[MAX_FACES];
+    
+    private final Matrix4 identityMatrix = new Matrix4();
 
     private static class FaceBatch implements Disposable {
         Texture texture;
@@ -63,7 +66,7 @@ public class BSPRenderer implements Disposable {
 
     private Texture buildLightmapTexture(BSPFile.Lightmap lm) {
         int s = BSPFile.LIGHTMAP_SIZE;
-        Pixmap pm = new Pixmap(s, s, Pixmap.Format.RGB888);
+        Pixmap pm = new Pixmap(s, s, Pixmap.Format.RGBA8888);
         for (int y = 0; y < s; y++) {
             for (int x = 0; x < s; x++) {
                 int idx = (y * s + x) * 3;
@@ -190,10 +193,15 @@ public class BSPRenderer implements Disposable {
         }
 
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+        Gdx.gl.glEnable(GL20.GL_CULL_FACE);
+        Gdx.gl.glFrontFace(GL20.GL_CW); // set geometry to use clockwise winding front faces
+        Gdx.gl.glCullFace(GL20.GL_BACK); // disable back faces on geometry
 
         shader.bind();
         shader.setMVP(camera.combined);
+        shader.setModel(identityMatrix); // this is needed to set matrix world 000 correctly for lighting
         shader.setLightGridColor(1f, 1f, 1f);
+        shader.setCameraPosition(camera.position);
 
         Texture whiteLM = getOrCreateWhiteLightmap();
 
@@ -215,6 +223,8 @@ public class BSPRenderer implements Disposable {
             shader.setHasLightmap(lm == whiteLM ? 0f : 1f);
             batch.mesh.render(shader.getProgram(), GL20.GL_TRIANGLES);
         }
+        
+        Gdx.gl.glDisable(GL20.GL_CULL_FACE); // Unpolute cull face leaks for the next render
     }
 
     private static float[] toGLVertex(BSPFile.Vertex v) {

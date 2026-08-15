@@ -1,8 +1,11 @@
 package io.rebelengine.Components;
 
 import com.badlogic.ashley.core.Component;
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector3;
 import io.rebelengine.BSPCollision;
+import io.rebelengine.Helpers.PhysicsType;
+import io.rebelengine.Instances.SFX;
 
 public class PhysicsBodyComponent implements Component {
     public final Vector3 velocity = new Vector3();
@@ -33,10 +36,15 @@ public class PhysicsBodyComponent implements Component {
     public Vector3 downPosition = new Vector3();
     public BSPCollision.TraceResult traceResult = new BSPCollision.TraceResult();
     
+    public PhysicsType Physics = PhysicsType.Dynamic; // dynamic body is the default
     public int bspModelIndexReference = -1; // refer to the instance component if there is one
-    public boolean ignore_physics_transformations = false;
     public float roll_sign = 1f;
     public Vector3 velocity_impact_threshold = new Vector3(30, 220, 310);
     
+    public Entity ignoreTarget = null; // when being held or inside another body it should ignore if we want
     
+    public float sfxImpactRange = 200f;
+    public SFX shortImpact;
+    public SFX mediumImpact;
+    public SFX highImpact;
 }

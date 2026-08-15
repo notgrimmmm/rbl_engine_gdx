@@ -38,7 +38,7 @@ public class ScriptingSystem extends EntitySystem implements RebelAshleyEngine.F
             ScriptComponent scriptComp = entity.getComponent(ScriptComponent.class);
             
             for (EntityScript behavior : scriptComp.behaviors){
-                behavior.update_fixed();
+                behavior.update_fixed(fixedDt);
             }
         }
     }

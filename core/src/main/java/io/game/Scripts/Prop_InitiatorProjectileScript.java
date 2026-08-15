@@ -32,7 +32,7 @@ public class Prop_InitiatorProjectileScript implements EntityScript{
     }
 
     @Override
-    public void update_fixed() {
+    public void update_fixed(float fixedDt) {
         body = owner.getComponent(PhysicsBodyComponent.class);
         // remove initiator tag if no longer a projectile
         if (body.grounded){
@@ -96,7 +96,7 @@ public class Prop_InitiatorProjectileScript implements EntityScript{
         }
 
         for (EntityScript script : activeScripts.values()) {
-            script.update_fixed();
+            script.update_fixed(fixedDt);
         }
     }
 

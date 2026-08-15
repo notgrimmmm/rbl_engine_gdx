@@ -33,6 +33,7 @@ public class Lwjgl3Launcher {
         Graphics.DisplayMode displayMode = Lwjgl3ApplicationConfiguration.getDisplayMode(monitor);
         
         configuration.setFullscreenMode(displayMode);
+        configuration.setBackBufferConfig(8, 8, 8, 8, 24, 8, 4);
         //// You can change these files; they are in lwjgl3/src/main/resources/ .
         //// They can also be loaded from the root of assets/ .
         configuration.setWindowIcon("libgdx128.png", "libgdx64.png", "libgdx32.png", "libgdx16.png");

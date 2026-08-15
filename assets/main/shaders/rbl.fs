@@ -8,6 +8,14 @@ uniform sampler2D u_lightmap;
 uniform float u_hasLightmap;
 uniform vec3  u_lightGridColor;
 
+uniform vec4  u_fogColor;
+uniform float u_fogStart;
+uniform float u_fogEnd;
+uniform float u_fogEnabled;
+uniform vec3  u_cameraPos;
+
+uniform float u_useNormalShading; // 1.0 = GLB Model, 0.0 = BSP Brush
+
 #define MAX_LIGHTS 5
 uniform int   u_numLights;
 uniform vec3  u_lightPos[MAX_LIGHTS];
@@ -20,39 +28,70 @@ uniform int   u_lightType[MAX_LIGHTS];
 varying vec2 v_uv0;
 varying vec2 v_uv1;
 varying vec3 v_worldPos;
+varying vec3 v_normal;
 
 void main() {
     vec4 base = texture2D(u_base, v_uv0);
     vec4 lm   = texture2D(u_lightmap, v_uv1);
     
-    // Calculate Indirect/Baked Light
+    // --- AMBIENT CONTROL ---
+    // For GLBs without baked lightmaps, scale ambient down (e.g. 0.35) 
+    // so dark sides are actually dark instead of washed out by the light grid.
     vec3 lmLight = lm.rgb * 2.0;
-    vec3 indirect = mix(u_lightGridColor, lmLight, u_hasLightmap);
+    vec3 rawAmbient = mix(u_lightGridColor, lmLight, u_hasLightmap);
+    vec3 indirect   = (u_useNormalShading > 0.5) ? (rawAmbient * 0.80) : rawAmbient;
     
+    vec3 N = normalize(v_normal);
     vec3 dynLight = vec3(0.0);
     
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= u_numLights) break;
         
-        float dist  = length(u_lightPos[i] - v_worldPos);
-        float atten = max(0.0, 1.0 - dist / u_lightRadius[i]);
+        vec3 lightVec = u_lightPos[i] - v_worldPos;
+        float dist    = length(lightVec);
+        float atten   = max(0.0, 1.0 - dist / u_lightRadius[i]);
         atten = atten * atten;
         
-        if (u_lightType[i] == 1) {
-            vec3  toFrag    = normalize(v_worldPos - u_lightPos[i]);
-            float cosAngle  = dot(toFrag, normalize(u_lightDir[i]));
-            float inner     = u_lightCone[i];
-            float outer     = inner - 0.08;
-            float spotAtten = smoothstep(outer, inner, cosAngle);
-            atten *= spotAtten;
+        if (atten > 0.0) {
+            vec3 L = normalize(lightVec);
+            
+            // Spotlight cone atten
+            if (u_lightType[i] == 1) {
+                vec3  toFrag    = -L;
+                float cosAngle  = dot(toFrag, normalize(u_lightDir[i]));
+                float inner     = u_lightCone[i];
+                float outer     = inner - 0.08;
+                float spotAtten = smoothstep(outer, inner, cosAngle);
+                atten *= spotAtten;
+            }
+            
+            // --- ENHANCED LAMBERTIAN SHADING ---
+            if (u_useNormalShading > 0.5) {
+                float NdotL = max(0.0, dot(N, L));
+                
+                // Exponent power pushes mid-tones darker and sharpens shadow boundaries
+                // pow(NdotL, 1.8) makes shadows significantly more obvious
+                NdotL = pow(NdotL, 1.8);
+                
+                atten *= NdotL;
+            }
+            
+            dynLight += u_lightColor[i] * atten;
         }
-        
-        dynLight += u_lightColor[i] * atten;
     }
     
-    // Additive logic: indirect + dynamic lights
-    // This ensures that even if indirect is (0,0,0), dynLight still illuminates the base
+    // Combine base lighting
     vec3 finalLight = indirect + dynLight;
+    vec3 litColor   = base.rgb * finalLight;
+
+    // --- Fog Calculation ---
+    if (u_fogEnabled > 0.5) {
+        float cameraDist = length(u_cameraPos - v_worldPos);
+        float fogFactor  = clamp((u_fogEnd - cameraDist) / (u_fogEnd - u_fogStart), 0.0, 1.0);
+        float fogBlend   = (1.0 - fogFactor) * u_fogColor.a;
+        
+        litColor = mix(litColor, u_fogColor.rgb, fogBlend);
+    }
     
-    gl_FragColor = vec4(base.rgb * finalLight, base.a);
+    gl_FragColor = vec4(litColor, base.a);
 }

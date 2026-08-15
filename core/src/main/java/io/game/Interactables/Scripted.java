@@ -11,6 +11,7 @@ import io.rebelengine.Components.InstanceComponent;
 import io.rebelengine.Components.PhysicsBodyComponent;
 import io.rebelengine.Components.TransformComponent;
 import io.rebelengine.DYNRenderer;
+import io.rebelengine.Helpers.PhysicsType;
 
 /**
  *
@@ -47,6 +48,7 @@ public class Scripted extends Entity{
         body.gravity = 220f;
         body.frictionCoeff = 7f;
         body.slopeCoeff = .99f;
+        body.Physics = PhysicsType.Kinematic;
         this.defaultGravity = body.gravity;
         
         add(transform);

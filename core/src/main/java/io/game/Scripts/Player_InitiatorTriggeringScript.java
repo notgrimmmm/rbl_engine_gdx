@@ -23,13 +23,10 @@ public class Player_InitiatorTriggeringScript implements EntityScript {
     }
 
     @Override
-    public void update_fixed() {
+    public void update_fixed(float fixedDt) {
         body = owner.getComponent(PhysicsBodyComponent.class);
         Array<Integer> currentOverlaps = body.traceResult.nonSolidOverlapIndices;
 
-        // ==========================================
-        // STEP 1: DETECT EXITS
-        // ==========================================
         removalScratch.clear();
         for (IntMap.Entry<EntityScript> entry : activeScripts.entries()) {
             int activeTriggerId = entry.key;
@@ -46,9 +43,6 @@ public class Player_InitiatorTriggeringScript implements EntityScript {
             activeScripts.remove(id);
         }
 
-        // ==========================================
-        // STEP 2: DETECT ENTERS & ACTIVE UPDATES
-        // ==========================================
         for (int i = 0; i < currentOverlaps.size; i++) {
             int triggerId = currentOverlaps.get(i);
             Info_Entity.Trigger trigger = EngineContext.get().get_trigger(triggerId);
@@ -67,7 +61,7 @@ public class Player_InitiatorTriggeringScript implements EntityScript {
                 }
                 continue;
             } else {
-                trigger.trigger_targets();
+                if (trigger.group_tag.isBlank()) trigger.trigger_targets(); //only call this if there is no targetname group (there is no script calling it)
             }
 
             EntityScript targetScript = EngineContext.get().get_script(trigger.group_tag);
@@ -86,11 +80,8 @@ public class Player_InitiatorTriggeringScript implements EntityScript {
             }
         }
 
-        // ==========================================
-        // STEP 3: TICK CONTINUOUS SCRIPTS
-        // ==========================================
         for (EntityScript script : activeScripts.values()) {
-            script.update_fixed();
+            script.update_fixed(fixedDt);
         }
     }
 

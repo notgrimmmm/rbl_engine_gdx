@@ -12,7 +12,7 @@ import com.badlogic.gdx.utils.Array;
 public interface EntityScript {
     final Array<Object> group_components = new Array<>();
     void set_components(Array<Object> components);
-    void update_fixed();
+    void update_fixed(float fixedDt);
     void execute(Object parameter);
     void execute_off();
 }

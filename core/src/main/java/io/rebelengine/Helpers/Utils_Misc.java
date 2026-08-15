@@ -1,5 +1,6 @@
 package io.rebelengine.Helpers;
 
+import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.Vector3;
 import io.rebelengine.BSPFile;
 import io.rebelengine.DYNRenderer;
@@ -37,6 +38,20 @@ public class Utils_Misc {
         instance.bmIndex = bmIndex;
         instance.position.set(DYNRenderer.getModelCenter(bModel));
         
+        return instance;
+    }
+    
+    public static DYNRenderer.RenderInstance createGlbRenderInstance(String key, Model glbModel, Vector3 position, Vector3 rotation, DYNRenderer renderer) {
+        // 1. Pass GLB Model meshes into DYNRenderer to build BrushBatch entries
+        renderer.addGlbModel(key, glbModel);
+
+        // 2. Create the RenderInstance
+        DYNRenderer.RenderInstance instance = new DYNRenderer.RenderInstance();
+        instance.meshKey = key;
+        instance.bmIndex = -10; // Negative index identifies it as external/GLB model
+        instance.position.set(position);
+        instance.rotation.set(rotation);
+
         return instance;
     }
 }

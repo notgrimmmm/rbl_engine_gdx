@@ -3,6 +3,7 @@ package io.rebelengine;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
@@ -17,9 +18,6 @@ public class EngineShader implements Disposable {
     public static final int LIGHT_POINT = 0;
     public static final int LIGHT_SPOT  = 1;
 
-//    private static final String VERT = Gdx.files.internal("main/shaders/rbl.vs").readString();
-//    private static final String FRAG = Gdx.files.internal("main/shaders/rbl.fs").readString();
-
     private final ShaderProgram program;
 
     private final float[] lightPositions = new float[MAX_LIGHTS * 3];
@@ -29,6 +27,11 @@ public class EngineShader implements Disposable {
     private final float[] lightCones     = new float[MAX_LIGHTS];
     private final int[]   lightTypes     = new int[MAX_LIGHTS];
     private int numLights = 0;
+
+    private final Color fogColor = new Color(0.1f, 0.1f, 0.1f, .4f);
+    private float fogStart = 10f;
+    private float fogEnd = 800f;
+    private boolean fogEnabled = true;
 
     public EngineShader() {
         ShaderProgram.pedantic = false;
@@ -48,18 +51,51 @@ public class EngineShader implements Disposable {
         program.setUniformi("u_base",      0);
         program.setUniformi("u_lightmap",  1);
         program.setUniformi("u_numLights", numLights);
+        
+        program.setUniformf("u_fogColor", fogColor.r, fogColor.g, fogColor.b, fogColor.a);
+        program.setUniformf("u_fogStart", fogStart);
+        program.setUniformf("u_fogEnd", fogEnd);
+        program.setUniformf("u_fogEnabled", fogEnabled ? 1.0f : 0.0f);
+
         if (numLights > 0) {
             program.setUniform3fv("u_lightPos",    lightPositions, 0, numLights * 3);
             program.setUniform3fv("u_lightColor",  lightColors,    0, numLights * 3);
             program.setUniform1fv("u_lightRadius", lightRadii,     0, numLights);
             program.setUniform3fv("u_lightDir",    lightDirs,      0, numLights * 3);
             program.setUniform1fv("u_lightCone",   lightCones,     0, numLights);
-            program.setUniform1iv("u_lightType", lightTypes, 0, numLights);
+            program.setUniform1iv("u_lightType",   lightTypes,     0, numLights);
         }
     }
 
     public void setMVP(Matrix4 mvp) {
         program.setUniformMatrix("u_mvp", mvp);
+    }
+    
+    public void setModel(Matrix4 model) {
+        program.setUniformMatrix("u_model", model);
+    }
+
+    public void setNormalMatrix(Matrix3 normalMatrix) {
+        program.setUniformMatrix("u_normalMatrix", normalMatrix);
+    }
+
+    public void setUseNormalShading(boolean enabled) {
+        program.setUniformf("u_useNormalShading", enabled ? 1.0f : 0.0f);
+    }
+
+    /** Set camera pos in world space so GLSL can compute exact camera-to-fragment distance for fog. */
+    public void setCameraPosition(Vector3 cameraPos) {
+        program.setUniformf("u_cameraPos", cameraPos);
+    }
+
+    public void setFog(Color color, float start, float end) {
+        this.fogColor.set(color);
+        this.fogStart = start;
+        this.fogEnd = end;
+    }
+
+    public void setFogEnabled(boolean enabled) {
+        this.fogEnabled = enabled;
     }
 
     public void setHasLightmap(float value) {
@@ -74,7 +110,6 @@ public class EngineShader implements Disposable {
         numLights = 0;
     }
 
-    /** Add a dynamic point light. Position in GL coords (Y-up). */
     public void addPointLight(float x, float y, float z,
                               float r, float g, float b,
                               float radius) {
@@ -89,12 +124,8 @@ public class EngineShader implements Disposable {
         numLights++;
     }
 
-    /**
-     * Add a dynamic spot light. Position and direction in GL coords (Y-up).
-     * coneAngleDegrees is the half-angle of the cone e.g. 30 = 60 degree total beam.
-     */
     public void addSpotLight(Vector3 pos, float radius, Vector3 dir,
-                             Color color,float coneAngleDegrees) {
+                              Color color, float coneAngleDegrees) {
         if (numLights >= MAX_LIGHTS) return;
         int i = numLights;
         lightPositions[i*3]   = pos.x; lightPositions[i*3+1] = pos.y; lightPositions[i*3+2] = pos.z;
@@ -106,7 +137,6 @@ public class EngineShader implements Disposable {
         numLights++;
     }
 
-    /** Alias for addPointLight — keeps existing code working. */
     public void addLight(float x, float y, float z,
                          float r, float g, float b,
                          float radius) {

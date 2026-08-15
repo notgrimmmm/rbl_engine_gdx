@@ -96,7 +96,7 @@ public class TwoWayLadderScript implements EntityScript{
     // frame update should not be needed for most scripts. input control should be used or passed
     // in this case since we arent trying to control a body in the ladder, we pass the input to the player
     @Override
-    public void update_fixed() {
+    public void update_fixed(float fixedDt) {
         if (!initiator_IN) {
             if (climbing) {
                 stopClimbing();
