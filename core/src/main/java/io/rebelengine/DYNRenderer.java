@@ -309,6 +309,33 @@ public class DYNRenderer implements Disposable {
         }
     }
     
+    public void renderDepth(ShadowMapBuffer depthShader, Camera camera){
+        depthShader.begin();
+        
+        for (RenderInstance inst : instances) {
+            Array<BrushBatch> batches = brushLibrary.get(inst.meshKey);
+            if (batches == null) continue;
+            
+            // reuse modelTransform matrix
+            modelTransform.setToTranslation(inst.position);
+            modelTransform.rotate(Vector3.Y, inst.rotation.y);
+            modelTransform.rotate(Vector3.X, inst.rotation.x);
+            modelTransform.rotate(Vector3.Z, inst.rotation.z);
+
+            // reuse combinedMatrix
+            combinedMatrix.set(camera.combined).mul(modelTransform);
+
+            depthShader.setMVP(combinedMatrix);
+            depthShader.setModel(modelTransform);
+
+            for (BrushBatch batch : batches) {
+                if (batch.isGlbMesh)  batch.mesh.render(depthShader.getDepthShader(), GL20.GL_TRIANGLES);
+            }
+        }
+        
+        depthShader.end(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+    }
+    
     @Override
     public void dispose() {
         for (Array<BrushBatch> batches : brushLibrary.values()) {

@@ -15,7 +15,6 @@ import io.rebelengine.EngineContext;
 import io.rebelengine.Helpers.PhysicsType;
 import io.rebelengine.RebelAshleyEngine;
 import io.rebelengine.Helpers.SpatialHash;
-import io.rebelengine.Instances.SFX;
 import java.util.HashSet;
 import java.util.Set;
 

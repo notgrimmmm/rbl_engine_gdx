@@ -20,6 +20,7 @@ import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -88,7 +89,8 @@ public class RebelEngineBase implements Disposable{
     private final ScriptingSystem scriptingSystem;
 
     private BasePlayer player_base;
-
+    ShadowMapBuffer SHADOW_MAP;
+    
     public RebelEngineBase(MiniAudio audio_engine) {
         EngineContext gameContext = new EngineContext(this); // might cause issues later moving between scenes ???
         gameContext.initialize(gameContext);
@@ -118,7 +120,9 @@ public class RebelEngineBase implements Disposable{
         ASHLEY.addSystem(cameraSyncSystem);
         ASHLEY.addSystem(scriptingSystem);
 
-
+        this.SHADOW_MAP = new ShadowMapBuffer(2048, 2048f, 2048f);
+        this.SHADER.setShadowMapResolution(2048f);
+        this.SHADER.setShadowTextureUnit(2);
 
         /**
          * Register all debugging commands
@@ -429,13 +433,20 @@ public class RebelEngineBase implements Disposable{
         float alpha = stepSimulation(delta);
         ASHLEY.updateRender(alpha);
         camera.update();
-
+        
         // Convert GL camera position to Q3 coords for PVS lookup
         // GL(x, y, z) -> Q3(x, -z, y)
         float q3x =  camera.position.x;
         float q3y = -camera.position.z;
         float q3z =  camera.position.y;
 
+        SHADOW_MAP.updateLightPosition(camera.position, SHADER.getSunDir());
+        DYN_RENDERER.renderDepth(SHADOW_MAP, SHADOW_MAP.getLightCamera());
+        SHADOW_MAP.bindShadowTexture(2);
+        Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
+
+        SHADER.setShadowMapProjViewTrans(SHADOW_MAP.getProjViewTrans());
+        SHADER.setShadowMapResolution(SHADOW_MAP.getResolution());
         SHADER.clearLights();
         SHADER.addSpotLight(camera.position, 100f, camera.direction, Color.WHITE, 95);
         SHADER.bind();
@@ -452,10 +463,9 @@ public class RebelEngineBase implements Disposable{
     }
 
     /**
-     *
      * @param delta - use for lights and animations
      *        alpha - use for interpolating physics
-     *   fixed_step - use for any physcis movement
+     *   fixed_step - use for any physics movement
      */
     public float stepSimulation(float delta){
         boolean stepped = false;
@@ -489,7 +499,6 @@ public class RebelEngineBase implements Disposable{
             this.camera = player_base.getCamera();
             return;
         }
-
         this.camera = cam;
     }
 

@@ -221,12 +221,12 @@ public class BSPRenderer implements Disposable {
             Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
             shader.setHasLightmap(lm == whiteLM ? 0f : 1f);
-            batch.mesh.render(shader.getProgram(), GL20.GL_TRIANGLES);
+            batch.mesh.render(shader.getProgram(), GL20.GL_TRIANGLES); // this is the render model/world
         }
         
         Gdx.gl.glDisable(GL20.GL_CULL_FACE); // Unpolute cull face leaks for the next render
     }
-
+    
     private static float[] toGLVertex(BSPFile.Vertex v) {
         float inset = 0.5f / BSPFile.LIGHTMAP_SIZE;
         float u1 = Math.max(inset, Math.min(1f - inset, v.u1));
