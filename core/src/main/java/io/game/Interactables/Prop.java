@@ -22,6 +22,7 @@ public class Prop extends Entity{
     public final TransformComponent transform ;
     public final PhysicsBodyComponent body;
     public final Model modelGLB;
+    public String uid = "";
     
     public Prop (DYNRenderer.RenderInstance instance, BSPFile.Model model, Vector3 origin){
         this.instanceComponent = new InstanceComponent();

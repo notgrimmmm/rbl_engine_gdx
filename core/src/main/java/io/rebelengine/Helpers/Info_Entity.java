@@ -46,6 +46,7 @@ public class Info_Entity {
     }
     
     public static class Location {
+        public int indexed = 0;
         public Vector3 vec = new Vector3();
     }
     

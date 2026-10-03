@@ -208,13 +208,14 @@ public class BSPTree {
 
     /**
      * Evaluate a bicubic bezier patch at (s, t) using the 3×3 control grid.
-     * Returns [x, y, z, u0, v0, u1, v1].
+     * Returns [x, y, z, nx, nz, -ny, u0, v0, u1, v1].
      */
     private float[] evalBezier(BSPFile.Vertex[] ctrl, float s, float t) {
         float s0 = (1 - s) * (1 - s), s1 = 2 * s * (1 - s), s2 = s * s;
         float t0 = (1 - t) * (1 - t), t1 = 2 * t * (1 - t), t2 = t * t;
 
         float x  = 0, y  = 0, z  = 0;
+        float nx = 0, ny = 0, nz = 0;
         float u0 = 0, v0 = 0, u1 = 0, v1 = 0;
 
         float[] sw = { s0, s1, s2 };
@@ -225,11 +226,16 @@ public class BSPTree {
                 float w = sw[col] * tw[row];
                 BSPFile.Vertex v = ctrl[row * 3 + col];
                 x  += w * v.x;  y  += w * v.y;  z  += w * v.z;
+                nx += w * v.nx; ny += w * v.ny; nz += w * v.nz;
                 u0 += w * v.u0; v0 += w * v.v0;
                 u1 += w * v.u1; v1 += w * v.v1;
             }
         }
-        // Apply Q3 -> GL swizzle here: Q3(x,y,z) -> GL(x, z, -y)
-        return new float[]{ x, z, -y, u0, v0, u1, v1 };
+        float len = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+        if (len > 0.0001f) {
+            nx /= len; ny /= len; nz /= len;
+        }
+        // Apply Q3 -> GL swizzle here: Q3(x,y,z) -> GL(x, z, -y), Q3(nx,ny,nz) -> GL(nx, nz, -ny)
+        return new float[]{ x, z, -y, nx, nz, -ny, u0, v0, u1, v1 };
     }
 }

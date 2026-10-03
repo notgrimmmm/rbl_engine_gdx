@@ -1,5 +1,6 @@
 package io.rebelengine.Helpers;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.Vector3;
 import io.rebelengine.BSPFile;
@@ -16,6 +17,20 @@ public class Utils_Misc {
     public static Vector3 parseVector3(String s) {
         String[] p = s.split(" ");
         return new Vector3(Float.parseFloat(p[0]), Float.parseFloat(p[2]), -Float.parseFloat(p[1]));
+    }
+    /**
+     * 
+     * @param s
+     * @return 
+     */
+    public static Color parseColor255(String s) {
+        String[] p = s.split(" ");
+        return new Color(
+            Float.parseFloat(p[0]) / 255f,
+            Float.parseFloat(p[1]) / 255f,
+            Float.parseFloat(p[2]) / 255f,
+            1f
+        );
     }
     
     /**

@@ -11,6 +11,8 @@ dependencies {
   api "games.rednblack.miniaudio:miniaudio:$miniaudioVersion"
 
   implementation "com.github.mgsx-dev.gdx-gltf:gltf:2.3.0"
+  implementation 'com.crashinvaders.vfx:gdx-vfx-core:0.5.4'
+  implementation 'com.crashinvaders.vfx:gdx-vfx-effects:0.5.4'
 
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"

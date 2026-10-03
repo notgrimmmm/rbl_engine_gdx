@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
+import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.*;
 
@@ -28,6 +29,7 @@ public class BSPRenderer implements Disposable {
     private final boolean[] faceStamp    = new boolean[MAX_FACES];
     
     private final Matrix4 identityMatrix = new Matrix4();
+    private final Matrix3 identityNormalMatrix = new Matrix3();
 
     private static class FaceBatch implements Disposable {
         Texture texture;
@@ -119,6 +121,7 @@ public class BSPRenderer implements Disposable {
 
         VertexAttribute[] attrs = {
             new VertexAttribute(Usage.Position,           3, "a_position"),
+            new VertexAttribute(Usage.Normal,             3, "a_normal"),
             new VertexAttribute(Usage.TextureCoordinates, 2, "a_uv0"),
             new VertexAttribute(Usage.TextureCoordinates, 2, "a_uv1"),
         };
@@ -137,9 +140,9 @@ public class BSPRenderer implements Disposable {
             FaceBatch batch   = new FaceBatch();
             batch.texIdx      = texIdx;
             batch.vertexCount = vList.size();
-            batch.verts       = new float[batch.vertexCount * 7];
+            batch.verts       = new float[batch.vertexCount * 10];
             for (int i = 0; i < batch.vertexCount; i++) {
-                System.arraycopy(vList.get(i), 0, batch.verts, i * 7, 7);
+                System.arraycopy(vList.get(i), 0, batch.verts, i * 10, 10);
             }
             batch.indexCount = iList.size();
             batch.indices    = new int[batch.indexCount];
@@ -200,8 +203,10 @@ public class BSPRenderer implements Disposable {
         shader.bind();
         shader.setMVP(camera.combined);
         shader.setModel(identityMatrix); // this is needed to set matrix world 000 correctly for lighting
+        shader.setNormalMatrix(identityNormalMatrix);
         shader.setLightGridColor(1f, 1f, 1f);
         shader.setCameraPosition(camera.position);
+        shader.setUseNormalShading(true);
 
         Texture whiteLM = getOrCreateWhiteLightmap();
 
@@ -231,7 +236,7 @@ public class BSPRenderer implements Disposable {
         float inset = 0.5f / BSPFile.LIGHTMAP_SIZE;
         float u1 = Math.max(inset, Math.min(1f - inset, v.u1));
         float v1 = Math.max(inset, Math.min(1f - inset, v.v1));
-        return new float[]{ v.x, v.z, -v.y, v.u0, v.v0, u1, v1 };
+        return new float[]{ v.x, v.z, -v.y, v.nx, v.nz, -v.ny, v.u0, v.v0, u1, v1 };
     }
 
     private Texture loadTexture(String basePath, int texIdx) {

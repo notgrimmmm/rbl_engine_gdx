@@ -9,6 +9,14 @@ textures/common/nodraw
     surfaceparm nodraw
 }
 
+textures/common/nav
+{
+    surfaceparm nodraw
+    surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm nolightmap
+}
+
 textures/common/clip
 {
     surfaceparm nodraw
@@ -21,13 +29,9 @@ textures/common/trigger
 	surfaceparm nonsolid
 }
 
-textures/common/prototype
+textures/common/smooth
 {
-    qer_editorimage textures/common/prototype.png
-	q3map_shadeAngle 360
-    {
-        map $lightmap
-		blendFunc filter
-        rgbGen identity
-    }
+	q3map_nonplanar
+	q3map_nonormalaxis   
+	q3map_shadeAngle 120
 }

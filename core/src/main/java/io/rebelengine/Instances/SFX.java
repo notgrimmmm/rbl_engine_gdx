@@ -18,6 +18,12 @@ import io.rebelengine.EngineContext;
 public class SFX {
     private final MASound sound;
     private final MAAudioBuffer decoded_buffer;
+    
+    private Vector3 position;
+    private float range = 0;
+    
+    private String uid = "";
+    
     public SFX(String fileName){
         FileHandle fileHandle = Gdx.files.internal("sounds/" + fileName + ".wav");
         
@@ -28,9 +34,29 @@ public class SFX {
         this.sound.setLinkedAudioBuffer(decoded_buffer);
     }
     
+    public void setUID(String id){uid = id;}
+    public String getUID() {return uid;}
+    
+    public void setPositionAndRange(Vector3 pos, float r){
+        position = pos;
+        range = r;
+    }
+    
     public void play(){
         sound.setSpatialization(false);
         sound.play();
+    }
+    
+    public void playDefault(){
+        if (position != null && range > 0){
+            play3d(position, range);
+        }else{
+            play();
+        }
+    }
+    
+    public void setVolume(float volume){
+        sound.setVolume(volume);
     }
     
     public void play3d(Vector3 audioPosition, float maxRange){

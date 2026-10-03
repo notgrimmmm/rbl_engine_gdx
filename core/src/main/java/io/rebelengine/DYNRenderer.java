@@ -131,7 +131,7 @@ public class DYNRenderer implements Disposable {
             long key = batchKey(texIdx, lmIdx);
             List<Float> vList = vertMap.computeIfAbsent(key, k -> new ArrayList<>());
             List<Short> iList = idxMap.computeIfAbsent(key, k -> new ArrayList<>());
-            int base = vList.size() / 7;
+            int base = vList.size() / 10;
 
             if (face.type == BSPFile.FACE_POLYGON || face.type == BSPFile.FACE_MESH) {
                 for (int v = 0; v < face.numVertices; v++) {
@@ -150,8 +150,9 @@ public class DYNRenderer implements Disposable {
             List<Short> iList = idxMap.get(entry.getKey());
             if (vList.isEmpty() || iList == null || iList.isEmpty()) continue;
 
-            Mesh mesh = new Mesh(true, vList.size() / 7, iList.size(),
+            Mesh mesh = new Mesh(true, vList.size() / 10, iList.size(),
                 new VertexAttribute(Usage.Position, 3, "a_position"),
+                new VertexAttribute(Usage.Normal, 3, "a_normal"),
                 new VertexAttribute(Usage.TextureCoordinates, 2, "a_uv0"),
                 new VertexAttribute(Usage.TextureCoordinates, 2, "a_uv1"));
 
@@ -185,6 +186,9 @@ public class DYNRenderer implements Disposable {
         vList.add(bv.x - modelCenter.x);
         vList.add(bv.z - modelCenter.y);
         vList.add(-bv.y - modelCenter.z);
+        vList.add(bv.nx);
+        vList.add(bv.nz);
+        vList.add(-bv.ny);
         vList.add(bv.u0);
         vList.add(bv.v0);
         vList.add(u1);
@@ -274,7 +278,7 @@ public class DYNRenderer implements Disposable {
             if (batches == null) continue;
             
             //Color lightC = LightGridManager.getAmbientAt(inst.position.x, inst.position.y, inst.position.z);
-            inst.lightGridColor.set(0.5f, 0.5f, 0.5f);
+            inst.lightGridColor.set(0.1f, 0.1f, 0.1f);
 
             // reuse modelTransform matrix
             modelTransform.setToTranslation(inst.position);
@@ -302,38 +306,12 @@ public class DYNRenderer implements Disposable {
                 Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
                 SHADER.setHasLightmap(batch.hasLightmap ? 1f : 0f);
-                SHADER.setUseNormalShading(batch.isGlbMesh); // Active Lambertian ONLY on GLB meshes
+                SHADER.setUseNormalShading(true); // Active Lambertian on both GLB and Brush meshes
 
                 batch.mesh.render(SHADER.getProgram(), GL20.GL_TRIANGLES);
             }
         }
-    }
-    
-    public void renderDepth(ShadowMapBuffer depthShader, Camera camera){
-        depthShader.begin();
-        
-        for (RenderInstance inst : instances) {
-            Array<BrushBatch> batches = brushLibrary.get(inst.meshKey);
-            if (batches == null) continue;
-            
-            // reuse modelTransform matrix
-            modelTransform.setToTranslation(inst.position);
-            modelTransform.rotate(Vector3.Y, inst.rotation.y);
-            modelTransform.rotate(Vector3.X, inst.rotation.x);
-            modelTransform.rotate(Vector3.Z, inst.rotation.z);
-
-            // reuse combinedMatrix
-            combinedMatrix.set(camera.combined).mul(modelTransform);
-
-            depthShader.setMVP(combinedMatrix);
-            depthShader.setModel(modelTransform);
-
-            for (BrushBatch batch : batches) {
-                if (batch.isGlbMesh)  batch.mesh.render(depthShader.getDepthShader(), GL20.GL_TRIANGLES);
-            }
-        }
-        
-        depthShader.end(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+        SHADER.setUseNormalShading(false);
     }
     
     @Override

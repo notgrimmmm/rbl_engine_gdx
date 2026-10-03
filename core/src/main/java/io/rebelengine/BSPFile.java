@@ -225,4 +225,3 @@ public class BSPFile {
     public String      entities;
     public byte[] lightGrid;  // raw light grid data from lump 15
 }
-

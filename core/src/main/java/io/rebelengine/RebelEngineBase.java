@@ -20,7 +20,6 @@ import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -29,8 +28,11 @@ import games.rednblack.miniaudio.MiniAudio;
 import io.game.Interactables.Prop;
 import io.game.Interactables.Scripted;
 import io.game.Interactables.ScriptedB;
+import io.game.Scripts.Enemy_InitiatorTriggeringScript;
+import io.game.Scripts.Enemy_NavLocomotionScript;
 import io.game.Scripts.Player_InitiatorTriggeringScript;
 import io.game.Scripts.Player_PropsInteractionScript;
+import io.game.Units.BaseEnemy;
 import io.rebelengine.Instances.SFX;
 import io.rebelengine.Commands.InfoBodiesCommand;
 
@@ -42,6 +44,7 @@ import io.rebelengine.Systems.TransformInterpolationSystem;
 
 import io.rebelengine.Commands.StatsCommand;
 import io.rebelengine.Commands.NoClipCommand;
+import io.rebelengine.Components.CameraComponent;
 import io.rebelengine.Components.EntityScript;
 import io.rebelengine.Components.ScriptComponent;
 import io.rebelengine.Systems.ScriptingSystem;
@@ -66,6 +69,8 @@ public class RebelEngineBase implements Disposable{
     public final RebelAshleyEngine ASHLEY;
 
     public EngineShader SHADER;
+    public DynLightsManager LIT_MANAGER;
+    
     public BSPRenderer  BSP_RENDERER;
     public BSPTree      BSP_TREE;
     public BSPFile      BSP;
@@ -73,8 +78,6 @@ public class RebelEngineBase implements Disposable{
     public BSPCollision BSP_COLLISION;
     public DYNRenderer DYN_RENDERER;
     public UIRenderer UI_RENDERER;
-    
-
 
     public Camera camera;
 
@@ -89,7 +92,9 @@ public class RebelEngineBase implements Disposable{
     private final ScriptingSystem scriptingSystem;
 
     private BasePlayer player_base;
-    ShadowMapBuffer SHADOW_MAP;
+    
+    //TEMP
+    NavMeshDebugRenderer navMeshDebugRenderer;
     
     public RebelEngineBase(MiniAudio audio_engine) {
         EngineContext gameContext = new EngineContext(this); // might cause issues later moving between scenes ???
@@ -98,6 +103,7 @@ public class RebelEngineBase implements Disposable{
 
         this.ASHLEY = new RebelAshleyEngine();
         this.SHADER = new EngineShader();
+        this.LIT_MANAGER = new DynLightsManager();
         this.UI_RENDERER = new UIRenderer();
         
         this.debuggingConsole = new DebuggingConsole(this);
@@ -119,10 +125,6 @@ public class RebelEngineBase implements Disposable{
         ASHLEY.addSystem(transformInterpolationSystem);
         ASHLEY.addSystem(cameraSyncSystem);
         ASHLEY.addSystem(scriptingSystem);
-
-        this.SHADOW_MAP = new ShadowMapBuffer(2048, 2048f, 2048f);
-        this.SHADER.setShadowMapResolution(2048f);
-        this.SHADER.setShadowTextureUnit(2);
 
         /**
          * Register all debugging commands
@@ -167,6 +169,8 @@ public class RebelEngineBase implements Disposable{
         BSP_RENDERER.buildGeometry(textureRoot);
         DYN_RENDERER = new DYNRenderer(SHADER, textureRoot);
         BSP_COLLISION = new BSPCollision(BSP);
+        NavMeshExtractor.NavMeshGeometry NAV_GEOMETRY = NavMeshExtractor.extract(BSP, "textures/common/nav");
+        navMeshDebugRenderer = new NavMeshDebugRenderer(NAV_GEOMETRY);
 
         BSPEntities parsedEntities = BSPEntityParser.parse(BSP.entities);
 
@@ -174,8 +178,10 @@ public class RebelEngineBase implements Disposable{
         if (debugEnt != null) {
             Vector3 depos = Utils_Misc.parseVector3(debugEnt.get("origin"));
             EngineContext.get().set_noclip_camera(depos);
+        }else{
+            inputMultiplexer.removeProcessor(debuggingConsole);
         }
-
+        
         BSPEntities.Entity playerEnt = parsedEntities.first("info_player_start");
         if (playerEnt != null) {
             Vector3 ppos = Utils_Misc.parseVector3(playerEnt.get("origin"));
@@ -193,12 +199,54 @@ public class RebelEngineBase implements Disposable{
             player_base.focus();
         }
         
+        List<BSPEntities.Entity> cameras_list = parsedEntities.byClass.get("_camera");
+        if (cameras_list != null){
+            for (BSPEntities.Entity cam : cameras_list){
+                if (cam.get("targetname") != null){
+                    Vector3 origin = Utils_Misc.parseVector3(cam.get("origin"));
+                    PerspectiveCamera _cam = new PerspectiveCamera(90f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+                    _cam.far = 2000f;
+                    _cam.position.set(origin);
+        
+                    if (cam.get("initiator") != null){
+                        Entity entity = new Entity();
+                        entity.flags = EntityFlags.INITIATOR;
+                        
+                        CameraComponent cameraComponent = new CameraComponent();
+                        cameraComponent.camera = _cam;
+                        
+                        entity.add(cameraComponent);
+                        _cam.update();
+   
+                        EngineContext.get().add_groupComponent(cam.get("targetname"), entity);
+                        ASHLEY.addEntity(entity);
+                        
+                    }else{
+                        EngineContext.get().add_groupComponent(cam.get("targetname"), _cam);
+                    }
+                }
+            }
+        }
+        
         List<BSPEntities.Entity> sound_ent_list = parsedEntities.byClass.get("sound_ent");
         if (sound_ent_list != null){
             for (BSPEntities.Entity sound_ent : sound_ent_list){
                 SFX sfx = new SFX(sound_ent.get("wav"));
+                Vector3 origin = Utils_Misc.parseVector3(sound_ent.get("origin"));
+                if (sound_ent.get("range3D") != null) sfx.setPositionAndRange(origin, Float.parseFloat(sound_ent.get("range3D")));
+                if (sound_ent.get("uid") != null) sfx.setUID(sound_ent.get("uid"));
+                
                 if (sound_ent.get("targetname") != null){
                     EngineContext.get().add_groupComponent(sound_ent.get("targetname"), sfx);
+                }
+                if (sound_ent.get("set_volume") != null){
+                    sfx.setVolume(Float.parseFloat(sound_ent.get("set_volume")));
+                }
+                if (sound_ent.get("set_loop") != null && sound_ent.get("set_loop").equals("1")){
+                    sfx.loop();
+                }
+                if (sound_ent.get("loaded") != null && sound_ent.get("loaded").equals("1")){
+                    sfx.playDefault();
                 }
             }
         }
@@ -218,6 +266,9 @@ public class RebelEngineBase implements Disposable{
                 
                 ASHLEY.addEntity(prop);
                 DYN_RENDERER.instances.add(instance);
+                
+                if (glbEnt.get("uid") != null) prop.uid = glbEnt.get("uid");
+                if (glbEnt.get("targetname") != null) EngineContext.get().add_groupComponent(glbEnt.get("targetname"), prop);
             }
         }
         
@@ -233,6 +284,10 @@ public class RebelEngineBase implements Disposable{
                 DYN_RENDERER.instances.add(instance);
                 
                 if (brushEnt.get("uid") != null) entity.uid = brushEnt.get("uid");
+                
+                if (brushEnt.get("absolute_targetname") != null){
+                    EngineContext.get().add_groupComponent(brushEnt.get("absolute_targetname"), entity);
+                }
                 if (brushEnt.get("targetname") != null){
                     EngineContext.get().add_groupComponent(brushEnt.get("targetname"), entity);
                 }
@@ -263,12 +318,15 @@ public class RebelEngineBase implements Disposable{
                 scripted.add(new ScriptComponent());
                 scripted.body.gravity = 0f;
                 
-                ASHLEY.addEntity(scripted);
-                DYN_RENDERER.instances.add(instance);
-                
+                if (physics_scriptable.get("absolute_targetname") != null){
+                    EngineContext.get().add_groupComponent(physics_scriptable.get("absolute_targetname"), scripted);
+                }
                 if (physics_scriptable.get("targetname") != null){
                     EngineContext.get().add_groupComponent(physics_scriptable.get("targetname"), scripted);
                 }
+                
+                ASHLEY.addEntity(scripted);
+                DYN_RENDERER.instances.add(instance);
             }
         }
 
@@ -328,7 +386,8 @@ public class RebelEngineBase implements Disposable{
             for (BSPEntities.Entity info_location : locations_list){
                 Info_Entity.Location location = new Info_Entity.Location();
                 location.vec = Utils_Misc.parseVector3(info_location.get("origin"));
-
+                if (info_location.get("indexed") != null ) location.indexed = Integer.parseInt(info_location.get("indexed"));
+                
                 String group_tag = info_location.get("targetname");
                 EngineContext.get().add_groupComponent(group_tag, location);
             }
@@ -360,6 +419,54 @@ public class RebelEngineBase implements Disposable{
                 if (txt_interaction.get("targetname") !=  null){
                     EngineContext.get().add_groupComponent(txt_interaction.get("targetname"), txt); // for lookup
                 }
+            }
+        }
+        
+        List<BSPEntities.Entity> dynamic_lights = parsedEntities.byClass.get("lit_point");
+        if (dynamic_lights != null){
+            for (BSPEntities.Entity litEnt : dynamic_lights){
+                Vector3 origin = Utils_Misc.parseVector3(litEnt.get("origin"));
+                Color color = Utils_Misc.parseColor255(litEnt.get("_color"));
+                float radius = Float.parseFloat(litEnt.get("radius"));
+                float flickerRange = litEnt.get("flicker_range") == null ? 0 : Float.parseFloat(litEnt.get("flicker_range"));
+                float intensity = litEnt.get("light") == null ? 1.0f : Float.parseFloat(litEnt.get("light"));
+                
+                //add other shit
+                DynLightsManager.LitPoint light_point = new DynLightsManager.LitPoint(origin, color, radius, flickerRange, intensity, true);
+                if (litEnt.get("targetname") != null) EngineContext.get().add_groupComponent(litEnt.get("targetname"), light_point);
+                if (litEnt.get("target") != null){
+                    for (Object obj : EngineContext.get().get_groupComponentsArray(litEnt.get("target"))){
+                        if (obj instanceof Info_Entity.FacingPoint fp){
+                            Vector3 direction = new Vector3(fp.point).sub(origin).nor();
+                            light_point.setDirection(direction);
+                            // set cone for spotlight
+                        }
+                    }
+                }
+                
+                LIT_MANAGER.addLight(light_point);
+            }
+        }
+        
+        List<BSPEntities.Entity> enemy_list = parsedEntities.byClass.get("info_enemy_start");
+        if (enemy_list != null){
+            NavMeshGraph NAV_GRAPH = new NavMeshGraph(NAV_GEOMETRY);
+            for (BSPEntities.Entity enemy_entity : enemy_list){
+                String modelString = enemy_entity.get("model");
+                Vector3 origin = Utils_Misc.parseVector3(enemy_entity.get("origin"));
+                SceneAsset asset = new GLBLoader().load(Gdx.files.internal("main/baseq3/" + modelString));
+                Model glbModel = asset.scene.model;
+                
+                DYNRenderer.RenderInstance instance = Utils_Misc.createGlbRenderInstance(modelString, glbModel, origin, Vector3.Zero, DYN_RENDERER);
+                
+                BaseEnemy enemy = new BaseEnemy(instance, glbModel, origin, NAV_GRAPH);
+                enemy.scriptComponent
+                        .add(new Enemy_InitiatorTriggeringScript(enemy))
+                        .add(new Enemy_NavLocomotionScript(enemy));
+                
+                if (enemy_entity.get("targetname") != null) EngineContext.get().add_groupComponent(enemy_entity.get("targetname"), enemy);
+                ASHLEY.addEntity(enemy);
+                DYN_RENDERER.instances.add(instance);
             }
         }
 
@@ -440,15 +547,9 @@ public class RebelEngineBase implements Disposable{
         float q3y = -camera.position.z;
         float q3z =  camera.position.y;
 
-        SHADOW_MAP.updateLightPosition(camera.position, SHADER.getSunDir());
-        DYN_RENDERER.renderDepth(SHADOW_MAP, SHADOW_MAP.getLightCamera());
-        SHADOW_MAP.bindShadowTexture(2);
-        Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
-
-        SHADER.setShadowMapProjViewTrans(SHADOW_MAP.getProjViewTrans());
-        SHADER.setShadowMapResolution(SHADOW_MAP.getResolution());
         SHADER.clearLights();
-        SHADER.addSpotLight(camera.position, 100f, camera.direction, Color.WHITE, 95);
+        LIT_MANAGER.refreshLighting(SHADER, delta);
+        //SHADER.addSpotLight(camera.position, 100f, camera.direction, Color.WHITE, 95);
         SHADER.bind();
 
         EngineContext.get().AUDIO().setListenerPosition(camera.position.x, camera.position.y, camera.position.z);
@@ -458,6 +559,10 @@ public class RebelEngineBase implements Disposable{
         BSP_RENDERER.render(camera, q3x, q3y, q3z);
         DYN_RENDERER.render(camera); //already contains instances added
         UI_RENDERER.render(camera);
+        
+        if (navMeshDebugRenderer != null) {
+            //navMeshDebugRenderer.render(camera);
+        }
 
         debuggingConsole.render(); // do this last
     }
@@ -495,25 +600,26 @@ public class RebelEngineBase implements Disposable{
     }
 
     public void setCamera(Camera cam){
-        if (cam == null || cam == player_base.getCamera()){
-            this.camera = player_base.getCamera();
+        if (cam != null) {
+            this.camera = cam;
             return;
         }
-        this.camera = cam;
+
+        if (player_base != null) this.camera = player_base.getCamera();
     }
 
     /**
      * Hand input focus to a different entity (e.g. a vehicle, a spectator
-     * camera, a remote-controlled drone). The new entity must carry an
+     * camera, a remote-controlled drone). The new entity must carry a
      * {@link io.rebelengine.Components.InputControlComponent}.
      * @param entity - entity we want to take input focus
      */
-    public void setInputFocus(com.badlogic.ashley.core.Entity entity) {
+    public void setInputFocus(Entity entity) {
         InputFocus.set(entity);
     }
 
     /** @return the entity currently receiving input, or {@code null}. */
-    public com.badlogic.ashley.core.Entity getInputFocus() {
+    public Entity getInputFocus() {
         return InputFocus.get();
     }
 
