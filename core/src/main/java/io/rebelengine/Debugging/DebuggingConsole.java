@@ -1,10 +1,5 @@
 package io.rebelengine.Debugging;
 
-import io.rebelengine.Debugging.DebugState;
-import io.rebelengine.Debugging.DebugRenderContext;
-import io.rebelengine.Debugging.DebugContext;
-import io.rebelengine.Debugging.DebugCommandRegistry;
-import io.rebelengine.Debugging.DebugCommand;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
@@ -17,7 +12,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import io.rebelengine.NavMeshExtractor;
 import io.rebelengine.RebelEngineBase;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DebuggingConsole extends InputAdapter implements Disposable {
     private static final float TEXT_X = 200f;
@@ -45,7 +43,7 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
     private float backspaceRepeatTimer = 0f;
     
     // Add this field alongside your other fields
-    private final java.util.List<String> activeSuggestions = new java.util.ArrayList<>();
+    private final List<String> activeSuggestions = new ArrayList<>();
 
     public DebuggingConsole(RebelEngineBase engine) {
         uiBatch = new SpriteBatch();
@@ -59,9 +57,14 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
         debugContext = new DebugContext(engine, debugState);
         debugRenderContext = new DebugRenderContext(uiBatch, uiFont, glyphLayout, shapeRenderer, uiViewport);
     }
+    
+    public void set_navmesh_data(NavMeshExtractor.NavMeshGeometry geometry){
+        debugContext.set_navmesh_debug(geometry);
+    }
 
     public void render() {
         uiViewport.apply();
+        
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDepthMask(false);
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -70,6 +73,11 @@ public class DebuggingConsole extends InputAdapter implements Disposable {
         commandRegistry.render(debugRenderContext, debugContext);
         renderConsoleLine();
         Gdx.gl.glDepthMask(true);
+        
+        // shows which commands are active in the viewport
+        uiBatch.begin();
+        uiFont.draw(uiBatch, debugContext.enabledCommandsText.toString(), 100, Gdx.graphics.getHeight() - 20f);
+        uiBatch.end();
     }
 
     public void update(float delta) {

@@ -4,6 +4,9 @@
  */
 package io.rebelengine;
 
+import Effekseer.swig.EffekseerBackendCore;
+import Effekseer.swig.EffekseerEffectCore;
+import Effekseer.swig.EffekseerManagerCore;
 import io.game.Units.BasePlayer;
 import io.rebelengine.Instances.UI_TextInteraction;
 import io.rebelengine.Helpers.InputFocus;
@@ -35,6 +38,7 @@ import io.game.Scripts.Player_PropsInteractionScript;
 import io.game.Units.BaseEnemy;
 import io.rebelengine.Instances.SFX;
 import io.rebelengine.Commands.InfoBodiesCommand;
+import io.rebelengine.Commands.InfoNavmeshCommand;
 
 import io.rebelengine.Systems.CameraSyncSystem;
 import io.rebelengine.Systems.FrameInputSystem;
@@ -47,6 +51,7 @@ import io.rebelengine.Commands.NoClipCommand;
 import io.rebelengine.Components.CameraComponent;
 import io.rebelengine.Components.EntityScript;
 import io.rebelengine.Components.ScriptComponent;
+import io.rebelengine.Helpers.Utils_Effeks;
 import io.rebelengine.Systems.ScriptingSystem;
 
 import java.io.IOException;
@@ -78,6 +83,9 @@ public class RebelEngineBase implements Disposable{
     public BSPCollision BSP_COLLISION;
     public DYNRenderer DYN_RENDERER;
     public UIRenderer UI_RENDERER;
+    
+    public final Effekseer.swig.EffekseerManagerCore EFFEKS_MANAGER;
+    public final Array<EffekseerEffectCore> Effeks_Arr = new Array<>();
 
     public Camera camera;
 
@@ -92,9 +100,6 @@ public class RebelEngineBase implements Disposable{
     private final ScriptingSystem scriptingSystem;
 
     private BasePlayer player_base;
-    
-    //TEMP
-    NavMeshDebugRenderer navMeshDebugRenderer;
     
     public RebelEngineBase(MiniAudio audio_engine) {
         EngineContext gameContext = new EngineContext(this); // might cause issues later moving between scenes ???
@@ -118,6 +123,13 @@ public class RebelEngineBase implements Disposable{
         this.transformInterpolationSystem = new TransformInterpolationSystem();
         this.cameraSyncSystem = new CameraSyncSystem();
         this.scriptingSystem = new ScriptingSystem();
+        
+        System.loadLibrary("EffekseerNativeForJava");
+        EffekseerBackendCore.InitializeWithOpenGL();
+        this.EFFEKS_MANAGER = new EffekseerManagerCore();
+        if (!EFFEKS_MANAGER.Initialize(8000)){
+            Gdx.app.log("EFFEKCORE: ", "Failed to initialize manager"); return;
+        }
 
         ASHLEY.addSystem(FrameInputSystem);
         ASHLEY.addSystem(LocomotionSystem);
@@ -132,6 +144,7 @@ public class RebelEngineBase implements Disposable{
         debuggingConsole.registerCommand(new StatsCommand());
         debuggingConsole.registerCommand(new NoClipCommand());
         debuggingConsole.registerCommand(new InfoBodiesCommand());
+        debuggingConsole.registerCommand(new InfoNavmeshCommand());
 
         inputMultiplexer.addProcessor(debuggingConsole);
         inputMultiplexer.addProcessor(frameInputProcessor);
@@ -169,8 +182,9 @@ public class RebelEngineBase implements Disposable{
         BSP_RENDERER.buildGeometry(textureRoot);
         DYN_RENDERER = new DYNRenderer(SHADER, textureRoot);
         BSP_COLLISION = new BSPCollision(BSP);
+        
         NavMeshExtractor.NavMeshGeometry NAV_GEOMETRY = NavMeshExtractor.extract(BSP, "textures/common/nav");
-        navMeshDebugRenderer = new NavMeshDebugRenderer(NAV_GEOMETRY);
+        debuggingConsole.set_navmesh_data(NAV_GEOMETRY); // for debugging visuals
 
         BSPEntities parsedEntities = BSPEntityParser.parse(BSP.entities);
 
@@ -248,6 +262,30 @@ public class RebelEngineBase implements Disposable{
                 if (sound_ent.get("loaded") != null && sound_ent.get("loaded").equals("1")){
                     sfx.playDefault();
                 }
+            }
+        }
+        
+        List<BSPEntities.Entity> effeks_list = parsedEntities.byClass.get("info_effek");
+        if (effeks_list != null){
+            for (BSPEntities.Entity info_effek : effeks_list){
+                
+                Vector3 origin = Utils_Misc.parseVector3(info_effek.get("origin"));
+                String effectPath = info_effek.get("file_path"); 
+                
+                EffekseerEffectCore effek = Utils_Effeks.loadEffect(effectPath, 1f); 
+                if(effek == null) {
+                    Gdx.app.log("EFFEKCORE: ", "Failed to load effect"); // Not needed but helpful debug
+                }else{
+                    Effeks_Arr.add(effek); // Add to array for correct exit 0 dispose later
+                    
+                    int efkhandle = EFFEKS_MANAGER.Play(effek);
+                    EFFEKS_MANAGER.SetEffectPosition(efkhandle, origin.x, origin.y, origin.z);
+                    if (info_effek.get("scale") != null){
+                        float scale = Float.parseFloat(info_effek.get("scale"));
+                        EFFEKS_MANAGER.SetEffectScale(efkhandle, scale, scale, scale);
+                    }
+                }
+
             }
         }
         
@@ -549,7 +587,7 @@ public class RebelEngineBase implements Disposable{
 
         SHADER.clearLights();
         LIT_MANAGER.refreshLighting(SHADER, delta);
-        //SHADER.addSpotLight(camera.position, 100f, camera.direction, Color.WHITE, 95);
+        //SHADER.addSpotLight(camera.position, 500f, camera.direction, Color.WHITE, 1f, 55);
         SHADER.bind();
 
         EngineContext.get().AUDIO().setListenerPosition(camera.position.x, camera.position.y, camera.position.z);
@@ -560,10 +598,8 @@ public class RebelEngineBase implements Disposable{
         DYN_RENDERER.render(camera); //already contains instances added
         UI_RENDERER.render(camera);
         
-        if (navMeshDebugRenderer != null) {
-            //navMeshDebugRenderer.render(camera);
-        }
-
+        Utils_Effeks.renderEffekseerStack(EFFEKS_MANAGER, camera, delta);
+        
         debuggingConsole.render(); // do this last
     }
 
@@ -635,8 +671,15 @@ public class RebelEngineBase implements Disposable{
     @Override
     public void dispose() {
         System.out.println("[ ENGINE DISPOSE ]");
+        
+        for (EffekseerEffectCore efk : Effeks_Arr){
+            efk.delete();
+        }
+        Effeks_Arr.clear();
+        
         if (BSP_RENDERER != null)   BSP_RENDERER.dispose();
         if (SHADER != null)         SHADER.dispose();
+        if (EFFEKS_MANAGER != null) EFFEKS_MANAGER.delete();
         debuggingConsole.dispose();
     }
 }

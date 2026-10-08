@@ -1,6 +1,5 @@
 package io.rebelengine.Helpers;
 
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import io.rebelengine.BSPFile;
@@ -11,21 +10,29 @@ public class LightGridManager {
     private static final Vector3 q3MinBounds = new Vector3();
     
     private static int gridW, gridH, gridD;
-    private static final int stepX = 64, stepY = 64, stepZ = 128;
-    private static final Color tmpColor = new Color();
+    private static final int bytesPerCell = 8;
+    
+    // Standard Q3 Lightgrid cell sizes
+    private static final float stepX = 64.0f;
+    private static final float stepY = 64.0f;
+    private static final float stepZ = 128.0f;
+    
+    public static Vector3 ambient_offset = new Vector3(0.07f, 0.07f, 0.07f);
 
-    // Set to true to see grid cell toggles (Blue, Cyan, Yellow, etc.)
-    // Set to false to use actual BSP lightgrid brightness
-    public static boolean DEBUG_GRID_CELLS = false;
+    public static class GridSample {
+        public final Vector3 ambient = new Vector3(0.2f, 0.2f, 0.2f);
+        public final Vector3 directed = new Vector3(0.8f, 0.8f, 0.8f);
+        public final Vector3 lightDir = new Vector3(0f, 1f, 0f);
+    }
 
     public static void init(BSPFile bsp) {
         if (bsp.lightGrid == null || bsp.models == null || bsp.models.length == 0) {
-            System.err.println("LightGridManager: No lightGrid data found in BSP!");
+            System.err.println("LightGridManager ERROR: No lightGrid data found in BSP!");
             return;
         }
 
         gridData = bsp.lightGrid;
-        
+
         float minX = bsp.models[0].minX;
         float minY = bsp.models[0].minY;
         float minZ = bsp.models[0].minZ;
@@ -34,71 +41,80 @@ public class LightGridManager {
         float maxY = bsp.models[0].maxY;
         float maxZ = bsp.models[0].maxZ;
 
-        // Snapping grid bounds to Q3 lightgrid step dimensions
-        q3MinBounds.x = stepX * (float) Math.floor(minX / stepX);
-        q3MinBounds.y = stepY * (float) Math.floor(minY / stepY);
-        q3MinBounds.z = stepZ * (float) Math.floor(minZ / stepZ);
+        q3MinBounds.x = stepX * (float) Math.ceil(minX / stepX);
+        q3MinBounds.y = stepY * (float) Math.ceil(minY / stepY);
+        q3MinBounds.z = stepZ * (float) Math.ceil(minZ / stepZ);
 
-        float q3MaxX = stepX * (float) Math.ceil(maxX / stepX);
-        float q3MaxY = stepY * (float) Math.ceil(maxY / stepY);
-        float q3MaxZ = stepZ * (float) Math.ceil(maxZ / stepZ);
+        float q3MaxX = stepX * (float) Math.floor(maxX / stepX);
+        float q3MaxY = stepY * (float) Math.floor(maxY / stepY);
+        float q3MaxZ = stepZ * (float) Math.floor(maxZ / stepZ);
 
-        gridW = (int) Math.max(1, Math.round((q3MaxX - q3MinBounds.x) / stepX));
-        gridH = (int) Math.max(1, Math.round((q3MaxY - q3MinBounds.y) / stepY));
-        gridD = (int) Math.max(1, Math.round((q3MaxZ - q3MinBounds.z) / stepZ));
+        // Q3Map2 grid cell dimensions (+1 is required by Q3Map2)
+        gridW = (int) ((q3MaxX - q3MinBounds.x) / stepX + 1);
+        gridH = (int) ((q3MaxY - q3MinBounds.y) / stepY + 1);
+        gridD = (int) ((q3MaxZ - q3MinBounds.z) / stepZ + 1);
+
+
+        int totalExpectedCells = gridW * gridH * gridD;
+        int totalActualCells = gridData.length / bytesPerCell;
+
+        System.out.println("--- LIGHTGRID BOUNDS ---");
+        System.out.println("BSP Model 0 Bounds: Min(" + minX + ", " + minY + ", " + minZ + ") Max(" + maxX + ", " + maxY + ", " + maxZ + ")");
+        System.out.println("Grid Dimensions: W=" + gridW + " (X), H=" + gridH + " (Y), D=" + gridD + " (Z)");
+        System.out.println("Total Expected Bytes: " + (totalExpectedCells * bytesPerCell) + " | Actual Grid Bytes: " + gridData.length);
+        System.out.println("Expected Cells: " + totalExpectedCells + " | Actual Cells in Byte Buffer: " + totalActualCells);
+        System.out.println("q3MinBounds: " + q3MinBounds);
     }
 
-    public static Color getAmbientAt(float px, float py, float pz) {
-        if (gridData == null || gridData.length == 0) return Color.WHITE;
+    public static void sampleAt(float px, float py, float pz, GridSample outSample) {
+        if (gridData == null || gridData.length == 0) return;
 
-        // 1. LibGDX World Space -> Q3 Coordinate Space
+        // LibGDX -> Q3 Axis Mapping
         float q3X = px;
-        float q3Y = -pz; 
-        float q3Z = py;
+        float q3Y = -pz;
+        float q3Z = py + 16.0f;
 
-        // 2. Offsets from grid origin
         float dx = q3X - q3MinBounds.x;
         float dy = q3Y - q3MinBounds.y;
         float dz = q3Z - q3MinBounds.z;
 
-        // 3. Grid coordinates
-        int gx = MathUtils.clamp((int) (dx / stepX), 0, gridW - 1);
-        int gy = MathUtils.clamp((int) (dy / stepY), 0, gridH - 1);
-        int gz = MathUtils.clamp((int) (dz / stepZ), 0, gridD - 1);
+        int gx = MathUtils.clamp((int) Math.floor(dx / stepX), 0, gridW - 1);
+        int gy = MathUtils.clamp((int) Math.floor(dy / stepY), 0, gridH - 1);
+        int gz = MathUtils.clamp((int) Math.floor(dz / stepZ), 0, gridD - 1);
 
-        // --- DEBUG MODE: VISUALIZE GRID CELL CROSSINGS ---
-        if (DEBUG_GRID_CELLS) {
-            float r = (gx % 2 == 0) ? 1.0f : 0.0f;
-            float g = (gy % 2 == 0) ? 1.0f : 0.0f;
-            float b = (gz % 2 == 0) ? 1.0f : 0.0f;
-            tmpColor.set(r, g, b, 1.0f);
-            return tmpColor;
+        // Q3Map2 memory layout stride: X -> Z -> Y
+        int sampleIndex = gx + (gy * gridW) + (gz * gridW * gridH);
+        int offset = sampleIndex * bytesPerCell;
+
+
+        if (offset < 0 || offset + 8 > gridData.length) {
+            return;
         }
 
-        // 4. Compute 1D array index
-        int sampleIndex = gx + (gy * gridW) + (gz * gridW * gridH);
-        int rawOffset = sampleIndex * 8;
+        // Unpack Ambient RGB
+        float ambR = Byte.toUnsignedInt(gridData[offset])     / 255.0f;
+        float ambG = Byte.toUnsignedInt(gridData[offset + 1]) / 255.0f;
+        float ambB = Byte.toUnsignedInt(gridData[offset + 2]) / 255.0f;
 
-        // HARD SAFETY CLAMP: Guarantees no Pink out-of-bounds flashes ever happen
-        int maxOffset = Math.max(0, gridData.length - 8);
-        int offset = MathUtils.clamp(rawOffset, 0, maxOffset);
+        // Unpack Directed RGB
+        float dirR = Byte.toUnsignedInt(gridData[offset + 3]) / 255.0f;
+        float dirG = Byte.toUnsignedInt(gridData[offset + 4]) / 255.0f;
+        float dirB = Byte.toUnsignedInt(gridData[offset + 5]) / 255.0f;
 
-        // 5. Unpack raw ambient & directional bytes (8 bytes per voxel)
-        float ambR = Byte.toUnsignedInt(gridData[offset]) / 255f;
-        float ambG = Byte.toUnsignedInt(gridData[offset + 1]) / 255f;
-        float ambB = Byte.toUnsignedInt(gridData[offset + 2]) / 255f;
+        outSample.ambient.set(ambR, ambG, ambB);
+        outSample.directed.set(dirR, dirG, dirB);
 
-        float dirR = Byte.toUnsignedInt(gridData[offset + 3]) / 255f;
-        float dirG = Byte.toUnsignedInt(gridData[offset + 4]) / 255f;
-        float dirB = Byte.toUnsignedInt(gridData[offset + 5]) / 255f;
+        // Unpack Spherical Light Direction
+        int phiByte   = Byte.toUnsignedInt(gridData[offset + 6]);
+        int thetaByte = Byte.toUnsignedInt(gridData[offset + 7]);
 
-        // 6. Ambient Brightness Sum + Overbright Multiplier
-        float MULTIPLIER = 2.5f;
-        float finalR = MathUtils.clamp((ambR + dirR) * MULTIPLIER, 0.05f, 1.0f);
-        float finalG = MathUtils.clamp((ambG + dirG) * MULTIPLIER, 0.05f, 1.0f);
-        float finalB = MathUtils.clamp((ambB + dirB) * MULTIPLIER, 0.05f, 1.0f);
+        float phi   = phiByte   * (MathUtils.PI / 255.0f);
+        float theta = thetaByte * (MathUtils.PI2 / 255.0f);
 
-        tmpColor.set(finalR, finalG, finalB, 1.0f);
-        return tmpColor;
+        float q3Lx = MathUtils.sin(phi) * MathUtils.cos(theta);
+        float q3Ly = MathUtils.sin(phi) * MathUtils.sin(theta);
+        float q3Lz = MathUtils.cos(phi);
+
+        outSample.lightDir.set(q3Lx, q3Lz, -q3Ly).nor();
     }
 }

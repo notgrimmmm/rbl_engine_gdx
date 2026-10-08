@@ -6,7 +6,6 @@ precision highp float;
 uniform sampler2D u_base;
 uniform sampler2D u_lightmap;
 
-
 uniform float u_hasLightmap;
 uniform vec3  u_lightGridColor;
 uniform float u_useNormalShading;
@@ -32,18 +31,28 @@ varying vec2 v_uv1;
 varying vec3 v_worldPos;
 varying vec3 v_normal;
 
+// LightGrid Baked Lighting Uniforms
+uniform vec3 u_gridAmbient;
+uniform vec3 u_gridDirected;
+uniform vec3 u_gridDir;
+
 void main() {
     vec4 base = texture2D(u_base, v_uv0);
-    vec4 lm   = texture2D(u_lightmap, v_uv1);
-
-    // --- Ambient / Lightmaps ---
-    vec3 lmLight = lm.rgb * 2.0;
-    vec3 rawAmbient = mix(u_lightGridColor, lmLight, u_hasLightmap);
-    vec3 indirect   = (u_hasLightmap > 0.5) ? rawAmbient : (rawAmbient * 0.80);
-
-    // --- Dynamic Point / Spot Lights ---
     vec3 N = normalize(v_normal);
     vec3 dynLight = vec3(0.0);
+    vec3 indirect = vec3(0.0);
+
+    if (u_hasLightmap > 0.5) {
+        vec4 lm = texture2D(u_lightmap, v_uv1);
+        indirect = lm.rgb * 2.0;
+    } else {
+        vec3 L_grid = length(u_gridDir) > 0.001 ? normalize(u_gridDir) : vec3(0.0, 1.0, 0.0);
+        float NdotL = max(0.0, dot(N, L_grid));
+        
+        // Full lighting sum
+        indirect = u_gridAmbient + (u_gridDirected * NdotL);
+        indirect *= 2.0;
+    }
     
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= u_numLights) break;
@@ -75,7 +84,6 @@ void main() {
     vec3 finalLight = indirect + dynLight;
     vec3 litColor   = base.rgb * finalLight;
 
-    // --- Fog ---
     if (u_fogEnabled > 0.5) {
         float cameraDist = length(u_cameraPos - v_worldPos);
         float fogFactor  = clamp((u_fogEnd - cameraDist) / (u_fogEnd - u_fogStart), 0.0, 1.0);
@@ -83,6 +91,8 @@ void main() {
         
         litColor = mix(litColor, u_fogColor.rgb, fogBlend);
     }
+
+    //Add banding remove with dither here
     
     gl_FragColor = vec4(litColor, base.a);
 }

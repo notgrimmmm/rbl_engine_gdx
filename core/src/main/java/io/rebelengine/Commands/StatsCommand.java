@@ -22,6 +22,17 @@ public class StatsCommand implements DebugCommand {
     @Override
     public String run(String[] args, DebugContext context) {
         context.debugState().showStats = !context.debugState().showStats;
+        
+        String displayKey = "[ " + key() + " ]";
+        if (context.debugState().showStats){
+            context.enabledCommandsText.append(displayKey);
+        }else{
+            int index = context.enabledCommandsText.indexOf(displayKey);
+            if (index != -1) {
+                context.enabledCommandsText.delete(index, index + displayKey.length());
+            }
+        }
+        
         return context.debugState().showStats ? "stats enabled" : "stats disabled";
     }
 

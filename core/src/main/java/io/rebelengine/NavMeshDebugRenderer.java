@@ -1,5 +1,6 @@
 package io.rebelengine;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -12,7 +13,11 @@ import com.badlogic.gdx.utils.Disposable;
 
 public class NavMeshDebugRenderer implements Disposable {
 
-    private Mesh mesh;
+    public Color fillColor = new Color(0.4f, 0.4f, 0.4f, 0.7f); // Default semi-transparent grey fill
+    public Color outlineColor = new Color(0.1f, 0.1f, 0.1f, 1.0f); // Default dark grey outline
+
+    private Mesh fillMesh;
+    private Mesh lineMesh;
     private ShaderProgram shader;
 
     public NavMeshDebugRenderer(NavMeshExtractor.NavMeshGeometry navGeometry) {
@@ -27,7 +32,7 @@ public class NavMeshDebugRenderer implements Disposable {
             return;
         }
 
-        // 1. Flatten Array<Vector3> into a packed float array [x, y, z, x, y, z, ...]
+        // Flatten Array<Vector3> into packed float array [x, y, z, ...]
         float[] floatVertices = new float[totalVerts * 3];
         for (int i = 0; i < totalVerts; i++) {
             Vector3 v = navGeometry.allVertices.get(i);
@@ -36,7 +41,13 @@ public class NavMeshDebugRenderer implements Disposable {
             floatVertices[i * 3 + 2] = v.z;
         }
 
-        // 2. Convert triangle indices (3 per triangle) to line indices (6 per triangle) for GL_LINES wireframe
+        // Direct indices for solid triangles
+        short[] triangleIndices = new short[totalTriangleIndices];
+        for (int i = 0; i < totalTriangleIndices; i++) {
+            triangleIndices[i] = navGeometry.indices.get(i);
+        }
+
+        // Expand triangle indices into 3 line segments (6 indices per triangle) for the outline
         int lineIndexCount = (totalTriangleIndices / 3) * 6;
         short[] lineIndices = new short[lineIndexCount];
 
@@ -59,18 +70,22 @@ public class NavMeshDebugRenderer implements Disposable {
             lineIndices[writeIdx++] = i1;
         }
 
-        // 3. Create static mesh
-        mesh = new Mesh(
-            true, 
-            totalVerts, 
-            lineIndexCount, 
+        // Create meshes
+        fillMesh = new Mesh(
+            true, totalVerts, totalTriangleIndices,
             new VertexAttribute(Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE)
         );
+        fillMesh.setVertices(floatVertices);
+        fillMesh.setIndices(triangleIndices);
 
-        mesh.setVertices(floatVertices);
-        mesh.setIndices(lineIndices);
+        lineMesh = new Mesh(
+            true, totalVerts, lineIndexCount,
+            new VertexAttribute(Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE)
+        );
+        lineMesh.setVertices(floatVertices);
+        lineMesh.setIndices(lineIndices);
 
-        // 4. Passthrough Shader
+        // Passthrough Shader
         String vertexShader = 
             "attribute vec4 " + ShaderProgram.POSITION_ATTRIBUTE + ";\n" +
             "uniform mat4 u_projModelView;\n" +
@@ -94,24 +109,44 @@ public class NavMeshDebugRenderer implements Disposable {
     }
 
     public void render(Camera camera) {
-        render(camera, Color.GREEN);
+        render(camera, fillColor, outlineColor);
     }
 
-    public void render(Camera camera, Color color) {
-        if (mesh == null || shader == null) return;
+    public void render(Camera camera, Color fill, Color outline) {
+        if (fillMesh == null || lineMesh == null || shader == null) return;
 
         shader.bind();
         shader.setUniformMatrix("u_projModelView", camera.combined);
-        shader.setUniformf("u_color", color.r, color.g, color.b, color.a);
 
-        mesh.render(shader, GL20.GL_LINES);
+        // Enable blending for transparency support
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        // Render Solid Triangles (with polygon offset to pull fill back in Z-buffer)
+        Gdx.gl.glEnable(GL20.GL_POLYGON_OFFSET_FILL);
+        Gdx.gl.glPolygonOffset(1.0f, 1.0f);
+
+        shader.setUniformf("u_color", fill.r, fill.g, fill.b, fill.a);
+        fillMesh.render(shader, GL20.GL_TRIANGLES);
+
+        Gdx.gl.glDisable(GL20.GL_POLYGON_OFFSET_FILL);
+
+        // Render Wireframe Outlines over the fill
+        shader.setUniformf("u_color", outline.r, outline.g, outline.b, outline.a);
+        lineMesh.render(shader, GL20.GL_LINES);
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     @Override
     public void dispose() {
-        if (mesh != null) {
-            mesh.dispose();
-            mesh = null;
+        if (fillMesh != null) {
+            fillMesh.dispose();
+            fillMesh = null;
+        }
+        if (lineMesh != null) {
+            lineMesh.dispose();
+            lineMesh = null;
         }
         if (shader != null) {
             shader.dispose();

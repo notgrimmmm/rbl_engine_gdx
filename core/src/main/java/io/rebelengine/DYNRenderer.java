@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
+import io.rebelengine.Helpers.LightGridManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,8 @@ public class DYNRenderer implements Disposable {
     private final Matrix4 modelTransform = new Matrix4();
     private final Matrix4 combinedMatrix = new Matrix4();
     private final Matrix3 normalMatrix = new Matrix3();
+    
+    private final LightGridManager.GridSample gridSample = new LightGridManager.GridSample();
 
     public DYNRenderer(EngineShader shader, String texturebase){
         this.SHADER = shader;
@@ -276,9 +279,14 @@ public class DYNRenderer implements Disposable {
         for (RenderInstance inst : instances) {
             Array<BrushBatch> batches = brushLibrary.get(inst.meshKey);
             if (batches == null) continue;
+
+            LightGridManager.sampleAt(inst.position.x, inst.position.y, inst.position.z, gridSample);
+            gridSample.ambient.add(LightGridManager.ambient_offset); // make it a bit brighter on dark sections
             
-            //Color lightC = LightGridManager.getAmbientAt(inst.position.x, inst.position.y, inst.position.z);
-            inst.lightGridColor.set(0.1f, 0.1f, 0.1f);
+            SHADER.setLightGridData(gridSample.ambient, gridSample.directed, gridSample.lightDir);
+            
+            inst.lightGridColor.set(gridSample.ambient);
+            SHADER.setLightGridColor(inst.lightGridColor.x, inst.lightGridColor.y, inst.lightGridColor.z);
 
             // reuse modelTransform matrix
             modelTransform.setToTranslation(inst.position);

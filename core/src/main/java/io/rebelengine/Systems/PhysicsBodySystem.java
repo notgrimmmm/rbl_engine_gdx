@@ -313,6 +313,7 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
 
     private boolean recoverFromOverlap(Entity entity, Vector3 position, Vector3 mins, Vector3 maxs,
                                        BSPCollision.TraceResult trace) {
+        
         PhysicsBodyComponent body = entity.getComponent(PhysicsBodyComponent.class);
         if (body.Physics.equals(PhysicsType.Kinematic)) return true; // always return true if its kinematic
         
@@ -321,7 +322,8 @@ public class PhysicsBodySystem extends EntitySystem implements RebelAshleyEngine
         }
 
         for (int i = 0; i < OVERLAP_RECOVERY_STEPS; i++) {
-            if (body.ignoreTarget == null) position.mulAdd(trace.normal, STEP_EPSILON);
+            //if (body.ignoreTarget == null) position.mulAdd(trace.normal, STEP_EPSILON); // this guard makes the player freeze on slopes if grabbed entity 
+            position.mulAdd(trace.normal, STEP_EPSILON); //  test this to make sure there are no side effects
             trace.reset();
             traceBox(entity, position, position, mins, maxs, trace);
             

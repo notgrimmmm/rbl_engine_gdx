@@ -170,6 +170,8 @@ public class NavMeshExtractor {
         }
 
         if (outList.size < 3) return null;
-        return outList.toArray(); // Might give warnings or crash when expecting vec3[]
+        Vector3[] result = new Vector3[outList.size];
+        System.arraycopy(outList.items, 0, result, 0, outList.size);
+        return result;
     }
 }

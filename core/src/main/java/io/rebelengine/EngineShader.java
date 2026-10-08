@@ -120,11 +120,16 @@ public class EngineShader implements Disposable {
     public void setFogEnabled(boolean enabled) {
         this.fogEnabled = enabled;
     }
-
+    
     // --- Light Management ---
-
     public void clearLights() {
         this.numLights = 0;
+    }
+    
+    public void setLightGridData(Vector3 ambient, Vector3 directed, Vector3 lightDir) {
+        program.setUniformf("u_gridAmbient", ambient);
+        program.setUniformf("u_gridDirected", directed);
+        program.setUniformf("u_gridDir", lightDir);
     }
 
     /**

@@ -1,5 +1,9 @@
 package io.rebelengine.Commands;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
+import io.rebelengine.Components.TransformComponent;
 import io.rebelengine.Debugging.DebugCommand;
 import io.rebelengine.Debugging.DebugContext;
 import io.rebelengine.Debugging.DebugRenderContext;
@@ -18,6 +22,8 @@ import io.rebelengine.Helpers.InputFocus;
  */
 public class NoClipCommand implements DebugCommand {
 
+    private String playertoposition_texthelper = "[ p ] player to position";
+    
     @Override
     public String key() {
         return "noclip";
@@ -35,12 +41,36 @@ public class NoClipCommand implements DebugCommand {
             EngineContext.get().set_activeCamera(null); // null routes to player camera
             InputFocus.setLocked(false);
         }
+        
+        String displayKey = "[ " + key() + " ]";
+        if (context.debugState().noclip){
+            context.enabledCommandsText.append(displayKey);
+        }else{
+            int index = context.enabledCommandsText.indexOf(displayKey);
+            if (index != -1) {
+                context.enabledCommandsText.delete(index, index + displayKey.length());
+            }
+        }
 
         return enabling ? "noclip on" : "noclip off";
     }
 
     @Override
     public void render(DebugRenderContext renderContext, DebugContext context) {
-        // no rendering
+        if (!context.debugState().noclip) {
+            return;
+        }
+        
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)){
+            if (context.engine().getInputFocus() != null){
+                context.engine().getInputFocus().getComponent(TransformComponent.class).currentPosition.set(EngineContext.get().get_activeCamera().position);
+            }
+        }
+        
+        renderContext.uiBatch().begin();
+        renderContext.uiFont().setColor(Color.WHITE);
+        renderContext.uiFont().draw(renderContext.uiBatch(), playertoposition_texthelper, 100f, 100f);
+        renderContext.uiBatch().end();
+        
     }
 }

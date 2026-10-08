@@ -31,6 +31,16 @@ public class InfoBodiesCommand implements DebugCommand {
     @Override
     public String run(String[] args, DebugContext context) {
         context.debugState().infoBodies = !context.debugState().infoBodies;
+        
+        String displayKey = "[ " + key() + " ]";
+        if (context.debugState().infoBodies){
+            context.enabledCommandsText.append(displayKey);
+        }else{
+            int index = context.enabledCommandsText.indexOf(displayKey);
+            if (index != -1) {
+                context.enabledCommandsText.delete(index, index + displayKey.length());
+            }
+        }
         return context.debugState().infoBodies ? "info_bodies enabled" : "info_bodies disabled";
     }
 
