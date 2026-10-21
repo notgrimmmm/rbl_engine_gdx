@@ -232,11 +232,27 @@ public class BSPRenderer implements Disposable {
         Gdx.gl.glDisable(GL20.GL_CULL_FACE); // Unpolute cull face leaks for the next render
     }
     
-    private static float[] toGLVertex(BSPFile.Vertex v) {
+//    private static float[] toGLVertex(BSPFile.Vertex v) {
+//        float inset = 0.5f / BSPFile.LIGHTMAP_SIZE;
+//        float u1 = Math.max(inset, Math.min(1f - inset, v.u1));
+//        float v1 = Math.max(inset, Math.min(1f - inset, v.v1));
+//        return new float[]{ v.x, v.z, -v.y, v.nx, v.nz, -v.ny, v.u0, v.v0, u1, v1 };
+//    }
+    
+    private static float[] toGLVertex(BSPFile.Vertex v) { // new for alphablend
         float inset = 0.5f / BSPFile.LIGHTMAP_SIZE;
         float u1 = Math.max(inset, Math.min(1f - inset, v.u1));
         float v1 = Math.max(inset, Math.min(1f - inset, v.v1));
-        return new float[]{ v.x, v.z, -v.y, v.nx, v.nz, -v.ny, v.u0, v.v0, u1, v1 };
+
+        // Pack r, g, b, a into a single float for a_color (delivers Q3Map2 alphaMod vertex alpha)
+        float colorBits = Color.toFloatBits(
+            Byte.toUnsignedInt(v.r) / 255f, 
+            Byte.toUnsignedInt(v.g) / 255f, 
+            Byte.toUnsignedInt(v.b) / 255f, 
+            Byte.toUnsignedInt(v.a) / 255f
+        );
+
+        return new float[]{ v.x, v.z, -v.y, v.nx, v.nz, -v.ny, v.u0, v.v0, u1, v1, colorBits };
     }
 
     private Texture loadTexture(String basePath, int texIdx) {

@@ -35,7 +35,7 @@ public class TransformInterpolationSystem extends EntitySystem implements RebelA
             if (instanceComp != null && instanceComp.instance != null) {
                 instanceComp.instance.position.set(transform.renderPosition);
                 // GDX uses Y for Yaw, X for Pitch in standard 3D rotation order
-                instanceComp.instance.rotation.set(transform.renderPitch, transform.renderYaw, 0f);
+                if (!instanceComp.override_rotation) instanceComp.instance.rotation.set(transform.renderPitch, transform.renderYaw, 0f);
             }
         }
     }

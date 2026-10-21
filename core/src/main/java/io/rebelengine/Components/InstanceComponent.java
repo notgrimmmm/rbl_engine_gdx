@@ -13,4 +13,5 @@ import io.rebelengine.DYNRenderer;
 public class InstanceComponent implements Component{
     public DYNRenderer.RenderInstance instance = null;
     public int bspModelIndex = -1;
+    public boolean override_rotation = false;
 }

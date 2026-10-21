@@ -63,7 +63,7 @@ public class BSPLoader {
         readFaces(bsp, buf);
         readLightmaps(bsp, buf);
         readVisibility(bsp, buf);
-        readLightGrid(bsp, buf); // <--- ADD THIS LINE
+        readLightGrid(bsp, buf);
 
         return bsp;
     }
