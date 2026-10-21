@@ -14,9 +14,15 @@ dependencies {
   api "com.github.mgsx-dev.gdx-gltf:gltf:2.3.0"
   api 'com.crashinvaders.vfx:gdx-vfx-core:0.5.4'
   api 'com.crashinvaders.vfx:gdx-vfx-effects:0.5.4'
-  api project(':effekseer')
+  api files('libs/Effekseer.jar')
 
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(zipTree('libs/Effekseer.jar'))
+    exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
