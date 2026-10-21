@@ -1,6 +1,10 @@
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 eclipse.project.name = appName + '-core'
 
+configurations {
+  miniaudioDesktopNatives
+}
+
 dependencies {
   api "com.badlogicgames.ashley:ashley:$ashleyVersion"
   api "com.badlogicgames.gdx-controllers:gdx-controllers-core:$gdxControllersVersion"
@@ -9,9 +13,9 @@ dependencies {
   api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
   api "com.badlogicgames.gdx:gdx:$gdxVersion"
   api "games.rednblack.miniaudio:miniaudio:$miniaudioVersion"
-  // Native binaries are needed at runtime, not while compiling against the API.
-  // Keep this on core so consumers of the published core artifact get them transitively.
-  runtimeOnly "games.rednblack.miniaudio:gdx-miniaudio-platform:$miniaudioVersion:natives-desktop"
+  // Gradle module metadata drops the classifier on this dependency. Bundle the native
+  // artifact into core below so downstream projects get the DLLs/SOs from this JAR.
+  miniaudioDesktopNatives "games.rednblack.miniaudio:gdx-miniaudio-platform:$miniaudioVersion:natives-desktop"
 
   api "com.github.mgsx-dev.gdx-gltf:gltf:2.3.0"
   api 'com.crashinvaders.vfx:gdx-vfx-core:0.5.4'
@@ -33,5 +37,6 @@ processResources {
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from(zipTree('libs/Effekseer.jar'))
+    from { configurations.miniaudioDesktopNatives.collect { zipTree(it) } }
     exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
