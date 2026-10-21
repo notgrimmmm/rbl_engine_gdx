@@ -55,8 +55,11 @@ import io.rebelengine.Helpers.Utils_Effeks;
 import io.rebelengine.Systems.ScriptingSystem;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
@@ -124,7 +127,7 @@ public class RebelEngineBase implements Disposable{
         this.cameraSyncSystem = new CameraSyncSystem();
         this.scriptingSystem = new ScriptingSystem();
         
-        System.loadLibrary("EffekseerNativeForJava");
+        loadEffekseerNativeLibrary();
         EffekseerBackendCore.InitializeWithOpenGL();
         this.EFFEKS_MANAGER = new EffekseerManagerCore();
         if (!EFFEKS_MANAGER.Initialize(8000)){
@@ -155,6 +158,29 @@ public class RebelEngineBase implements Disposable{
         camera.near = 16f;
         camera.far  = 4096f;
         camera.update();
+    }
+
+    private static void loadEffekseerNativeLibrary() {
+        String osName = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
+        if (!osName.startsWith("windows")) {
+            throw new UnsupportedOperationException(
+                "The bundled Effekseer native library is currently available only for Windows x86_64."
+            );
+        }
+
+        String resourcePath = "/native/windows-x86_64/EffekseerNativeForJava.dll";
+        try (InputStream library = RebelEngineBase.class.getResourceAsStream(resourcePath)) {
+            if (library == null) {
+                throw new IllegalStateException("Effekseer native library missing from core artifact: " + resourcePath);
+            }
+
+            Path extractedLibrary = Files.createTempFile("EffekseerNativeForJava-", ".dll");
+            extractedLibrary.toFile().deleteOnExit();
+            Files.copy(library, extractedLibrary, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            System.load(extractedLibrary.toAbsolutePath().toString());
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to extract the Effekseer native library.", e);
+        }
     }
 
     /**

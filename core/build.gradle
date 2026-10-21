@@ -9,7 +9,9 @@ dependencies {
   api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
   api "com.badlogicgames.gdx:gdx:$gdxVersion"
   api "games.rednblack.miniaudio:miniaudio:$miniaudioVersion"
-  api "games.rednblack.miniaudio:gdx-miniaudio-platform:$miniaudioVersion:natives-desktop"
+  // Native binaries are needed at runtime, not while compiling against the API.
+  // Keep this on core so consumers of the published core artifact get them transitively.
+  runtimeOnly "games.rednblack.miniaudio:gdx-miniaudio-platform:$miniaudioVersion:natives-desktop"
 
   api "com.github.mgsx-dev.gdx-gltf:gltf:2.3.0"
   api 'com.crashinvaders.vfx:gdx-vfx-core:0.5.4'
@@ -19,6 +21,13 @@ dependencies {
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
+}
+
+// Bundle the Effekseer JNI library as a core resource so it is published with the module.
+processResources {
+    from(rootProject.file('assets/EffekseerNativeForJava.dll')) {
+        into 'native/windows-x86_64'
+    }
 }
 
 jar {
