@@ -61,6 +61,18 @@ configure(subprojects) {
   }
 }
 
+project(':core') {
+  apply plugin: 'maven-publish'
+  
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+      }
+    }
+  }
+}
+
 subprojects {
   version = "$projectVersion"
   ext.appName = 'rebelengine'
