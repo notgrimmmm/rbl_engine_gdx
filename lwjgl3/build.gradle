@@ -12,7 +12,21 @@ buildscript {
 }
 plugins {
   id "application"
+  id "java-library"
+  id "maven-publish"
 }
+
+group = 'com.github.notgrimmmm'
+version = '1.0.0'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
 apply plugin: 'io.github.fourlastor.construo'
 
 
