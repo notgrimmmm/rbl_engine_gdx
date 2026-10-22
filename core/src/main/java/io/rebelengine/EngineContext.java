@@ -4,6 +4,7 @@ import io.rebelengine.Instances.UI_TextInteraction;
 import io.rebelengine.Helpers.Info_Entity;
 import io.rebelengine.Debugging.DebugCamera;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -56,6 +57,10 @@ public class EngineContext {
     
     public DYNRenderer getDYNRenderer(){
         return instance_engine.DYN_RENDERER;
+    }
+    
+    public InputMultiplexer getMultiplexer(){
+        return instance_engine.getMultiplex();
     }
     
     

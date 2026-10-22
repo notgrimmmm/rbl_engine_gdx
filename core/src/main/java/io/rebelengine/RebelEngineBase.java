@@ -693,6 +693,10 @@ public class RebelEngineBase implements Disposable{
     public InputProcessor getInputProcessor() {
         return inputMultiplexer;
     }
+    
+    public InputMultiplexer getMultiplex(){
+        return inputMultiplexer;
+    }
 
     @Override
     public void dispose() {
