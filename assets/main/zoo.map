@@ -3,9 +3,9 @@
 // entity 0
 {
 "classname" "worldspawn"
-"_tb_mod" "baseq3"
 "_tb_soft_map_bounds" "none"
 "_tb_textures" "textures/common;textures/sky;textures/stone"
+"_tb_mod" "baseq3"
 // brush 0
 {
 ( -944 -64 -16 ) ( -944 -63 -16 ) ( -944 -64 -15 ) common/stone 0 0 0 1 1
@@ -721,6 +721,41 @@
 }
 // entity 19
 {
+"classname" "trigger_ent"
+"targetname" "shdr_lcdTA"
+// brush 0
+{
+( -16 -96 0 ) ( -16 -95 0 ) ( -16 -96 1 ) common/trigger 16 48 0 1 1
+( -16 -96 0 ) ( -16 -96 1 ) ( -15 -96 0 ) common/trigger -16 48 0 1 1
+( -16 -96 0 ) ( -15 -96 0 ) ( -16 -95 0 ) common/trigger -16 -16 0 1 1
+( 48 -32 96 ) ( 48 -31 96 ) ( 49 -32 96 ) common/trigger -16 -16 0 1 1
+( 48 -32 16 ) ( 49 -32 16 ) ( 48 -32 17 ) common/trigger -16 48 0 1 1
+( 48 -32 16 ) ( 48 -32 17 ) ( 48 -31 16 ) common/trigger 16 48 0 1 1
+}
+}
+// entity 20
+{
+"classname" "brush_scriptable"
+"targetname" "shdr_lcdTA"
+// brush 0
+{
+( -4 -128 48 ) ( -4 -127 48 ) ( -4 -128 49 ) common/nodraw 16 16 0 1 1
+( -4 -112 48 ) ( -4 -112 49 ) ( -3 -112 48 ) common/nodraw 16 16 0 1 1
+( -4 -128 48 ) ( -3 -128 48 ) ( -4 -127 48 ) common/nodraw 16 -16 0 1 1
+( 44 -96 80 ) ( 44 -95 80 ) ( 45 -96 80 ) common/nodraw 16 -16 0 1 1
+( 44 -104 64 ) ( 45 -104 64 ) ( 44 -104 65 ) common/glass 16 16 0 1 1
+( 36 -96 64 ) ( 36 -96 65 ) ( 36 -95 64 ) common/nodraw 16 16 0 1 1
+}
+}
+// entity 21
+{
+"classname" "scriptor"
+"origin" "24 -88 120"
+"class" "TestTextureOverrideScript"
+"target" "shdr_lcdTA"
+}
+// entity 22
+{
 "classname" "func_group"
 "_tb_type" "_tb_layer"
 "_tb_name" "trans33"
@@ -782,7 +817,7 @@
 ( 5632 -2864 -3056 ) ( 5632 -2864 -3040 ) ( 5632 3040 -3056 ) sky/sky 0 0 0 1 1 0 1 0
 }
 }
-// entity 20
+// entity 23
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"
@@ -790,20 +825,20 @@
 "_tb_id" "12"
 "_tb_layer_sort_index" "1"
 }
-// entity 21
+// entity 24
 {
 "classname" "debug"
 "origin" "-8 -8 376"
 "console" "1"
 "_tb_layer" "12"
 }
-// entity 22
+// entity 25
 {
 "classname" "info_player_start"
 "origin" "0 0 32"
 "_tb_layer" "12"
 }
-// entity 23
+// entity 26
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"
@@ -811,7 +846,7 @@
 "_tb_id" "13"
 "_tb_layer_sort_index" "2"
 }
-// entity 24
+// entity 27
 {
 "classname" "trigger_ent"
 "targetname" "ladder_a"
@@ -826,7 +861,7 @@
 ( -208 128 16 ) ( -208 128 17 ) ( -208 129 16 ) common/trigger 0 0 0 1 1 0 0 0
 }
 }
-// entity 25
+// entity 28
 {
 "classname" "trigger_ent"
 "targetname" "ladder_b"
@@ -842,7 +877,7 @@
 ( -352 -48 16 ) ( -352 -48 17 ) ( -352 -47 16 ) common/trigger 0 0 0 1 1
 }
 }
-// entity 26
+// entity 29
 {
 "classname" "trigger_ent"
 "initiator" "projectile"
@@ -859,7 +894,7 @@
 ( -368 -48 336 ) ( -368 -48 337 ) ( -368 -47 336 ) common/trigger 0 0 0 1 1
 }
 }
-// entity 27
+// entity 30
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"

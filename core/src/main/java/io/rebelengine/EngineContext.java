@@ -54,6 +54,10 @@ public class EngineContext {
         instance_engine.ASHLEY.getSystem(PhysicsBodySystem.class).traceBox(owner, start, end, Vector3.Zero, Vector3.Zero, result);
     }
     
+    public DYNRenderer getDYNRenderer(){
+        return instance_engine.DYN_RENDERER;
+    }
+    
     
     // camera logic 
     // could be changed to not need this anymore with focus input logic ?

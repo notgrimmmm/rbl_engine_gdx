@@ -1017,42 +1017,42 @@ default
 168 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 19
+	entity 22
 	sampleSize 0
 }
 
 169 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 19
+	entity 22
 	sampleSize 0
 }
 
 170 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 19
+	entity 22
 	sampleSize 0
 }
 
 171 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 19
+	entity 22
 	sampleSize 0
 }
 
 172 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 19
+	entity 22
 	sampleSize 0
 }
 
 173 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 19
+	entity 22
 	sampleSize 0
 }
 
@@ -1440,5 +1440,13 @@ default
 	entity 15
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
+}
+
+225 // SURFACE_META V: 4 I: 6 planar
+{
+	shader textures/common/glass
+	entity 20
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 

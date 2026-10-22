@@ -198,11 +198,12 @@ public class DYNRenderer implements Disposable {
         vList.add(v1);
     }
     
-    public void overrideTextureForMesh(String meshKey, Texture newTexture) {
+    public void overrideTextureForMesh(String meshKey, Texture newTexture, boolean continueUseLightmap) {
         Array<BrushBatch> batches = brushLibrary.get(meshKey);
         if (batches != null) {
             for (BrushBatch batch : batches) {
                 batch.texture = newTexture;
+                batch.hasLightmap = continueUseLightmap;
             }
         }
     }
