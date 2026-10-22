@@ -197,6 +197,15 @@ public class DYNRenderer implements Disposable {
         vList.add(u1);
         vList.add(v1);
     }
+    
+    public void overrideTextureForMesh(String meshKey, Texture newTexture) {
+        Array<BrushBatch> batches = brushLibrary.get(meshKey);
+        if (batches != null) {
+            for (BrushBatch batch : batches) {
+                batch.texture = newTexture;
+            }
+        }
+    }
 
     private Texture loadTexture(int texIdx, BSPFile bsp) {
         Texture cached = textureLibrary.get(texIdx);
