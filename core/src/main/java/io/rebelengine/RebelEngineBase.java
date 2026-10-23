@@ -666,8 +666,16 @@ public class RebelEngineBase implements Disposable{
             this.camera = cam;
             return;
         }
-
-        if (player_base != null) this.camera = player_base.getCamera();
+        
+        if (getInputFocus() != null){
+            if (getInputFocus().getComponent(CameraComponent.class) != null) this.camera = getInputFocus().getComponent(CameraComponent.class).camera;
+        }
+        else{
+            try {
+                this.camera = player_base.getCamera();
+            } catch (Exception e) {
+            }
+        }
     }
 
     /**

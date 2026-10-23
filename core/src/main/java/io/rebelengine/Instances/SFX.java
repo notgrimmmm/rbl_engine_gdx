@@ -59,6 +59,10 @@ public class SFX {
         sound.setVolume(volume);
     }
     
+    public void setPitch(float pitch){
+        sound.setPitch(pitch);
+    }
+    
     public void play3d(Vector3 audioPosition, float maxRange){
         sound.setSpatialization(true);
         sound.setPosition(audioPosition.x, 
