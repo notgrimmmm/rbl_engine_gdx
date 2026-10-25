@@ -1017,42 +1017,42 @@ default
 168 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 22
+	entity 23
 	sampleSize 0
 }
 
 169 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 22
+	entity 23
 	sampleSize 0
 }
 
 170 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 22
+	entity 23
 	sampleSize 0
 }
 
 171 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 22
+	entity 23
 	sampleSize 0
 }
 
 172 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 22
+	entity 23
 	sampleSize 0
 }
 
 173 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 22
+	entity 23
 	sampleSize 0
 }
 

@@ -16,7 +16,7 @@ import io.rebelengine.Helpers.Info_Entity;
  *
  */
 public class Enemy_InitiatorTriggeringScript implements EntityScript{
-        private final Entity owner;
+    private final Entity owner;
     private PhysicsBodyComponent body;
     
     // Key: Trigger BSP Index (e.g., 3, 5) | Value: Running script instance

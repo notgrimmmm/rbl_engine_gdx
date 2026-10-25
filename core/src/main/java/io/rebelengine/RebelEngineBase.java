@@ -531,6 +531,7 @@ public class RebelEngineBase implements Disposable{
                 if (enemy_entity.get("targetname") != null) EngineContext.get().add_groupComponent(enemy_entity.get("targetname"), enemy);
                 ASHLEY.addEntity(enemy);
                 DYN_RENDERER.instances.add(instance);
+                DYN_RENDERER.resolve(instance); //resolve any animator setting issues
             }
         }
 
@@ -621,8 +622,9 @@ public class RebelEngineBase implements Disposable{
         // set listener worl up ? also should i set the listener index 0 ?
         
         BSP_RENDERER.render(camera, q3x, q3y, q3z);
+        DYN_RENDERER.update(delta); //for animations
         DYN_RENDERER.render(camera); //already contains instances added
-        UI_RENDERER.render(camera);
+        UI_RENDERER.render(camera); //idk if we want this here ? maybe put it outside engine ?
         
         Utils_Effeks.renderEffekseerStack(EFFEKS_MANAGER, camera, delta);
         

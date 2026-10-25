@@ -5,9 +5,12 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Model;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.model.NodePart;
+import com.badlogic.gdx.graphics.g3d.utils.AnimationController;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
@@ -22,8 +25,13 @@ import java.util.Map;
 public class DYNRenderer implements Disposable {
     private final EngineShader SHADER;
     private final String textureBase;
-    
+
+    // BSP brush models (generated meshes)
     private final Map<String, Array<BrushBatch>> brushLibrary = new HashMap<>();
+    // GLB models (source models; each RenderInstance gets its own ModelInstance)
+    private final Map<String, Model> glbModels = new HashMap<>();
+    private final Map<String, Texture> glbTextureOverrides = new HashMap<>();
+
     private final Map<Integer, Texture> textureLibrary = new HashMap<>();
     private final Array<Model> glbModelsToDispose = new Array<>();
 
@@ -36,7 +44,11 @@ public class DYNRenderer implements Disposable {
     private final Matrix4 modelTransform = new Matrix4();
     private final Matrix4 combinedMatrix = new Matrix4();
     private final Matrix3 normalMatrix = new Matrix3();
-    
+
+    private final Matrix4 partTransform = new Matrix4();
+    private final Matrix4 partMVP = new Matrix4();
+    private final Matrix3 partNormal = new Matrix3();
+
     private final LightGridManager.GridSample gridSample = new LightGridManager.GridSample();
 
     public DYNRenderer(EngineShader shader, String texturebase){
@@ -50,6 +62,54 @@ public class DYNRenderer implements Disposable {
         public Vector3 position = new Vector3();
         public Vector3 rotation = new Vector3();
         public Vector3 lightGridColor = new Vector3(1, 1, 1);
+
+        // --- GLB animation state (null for BSP brushes) ---
+        public ModelInstance modelInstance;
+        public AnimationController animator;
+        boolean resolved = false; // internal: have we looked for a GLB model yet?
+
+        /** Play an animation. loop=true loops forever. blend = crossfade time in seconds. */
+        public void play(String anim, boolean loop, float blend) {
+            if (animator == null) {
+                Gdx.app.error("DYNRenderer", "play(\"" + anim + "\") ignored: instance '" + meshKey
+                        + "' has no animator (not resolved yet via createGlbInstance()/resolve(), "
+                        + "or the model has no animations)");
+                return;
+            }
+            if (modelInstance.getAnimation(anim) == null) {
+                Gdx.app.error("DYNRenderer", "play(): animation \"" + anim + "\" not found on '" + meshKey + "'");
+                return;
+            }
+            // don't restart a looping animation that's already playing
+            if (loop && animator.current != null && animator.current.animation != null
+                    && animator.current.animation.id.equals(anim)) return;
+            animator.animate(anim, loop ? -1 : 1, 1f, null, blend);
+        }
+
+        /** Plays the first animation in the model */
+        public void playFirst(boolean loop, float blend) {
+            if (modelInstance == null || modelInstance.animations.size == 0) return;
+            play(modelInstance.animations.get(0).id, loop, blend);
+        }
+
+        /** Play an animation once and get a callback when it ends. */
+        public void playOnce(String anim, float blend, AnimationController.AnimationListener listener) {
+            if (animator == null) return;
+            animator.animate(anim, 1, 1f, listener, blend);
+        }
+
+        public void setAnimationSpeed(String anim, float speed, boolean loop, float blend) {
+            if (animator == null) return;
+            animator.animate(anim, loop ? -1 : 1, speed, null, blend);
+        }
+
+        public boolean hasAnimation(String anim) {
+            return modelInstance != null && modelInstance.getAnimation(anim) != null;
+        }
+
+        public void setPaused(boolean paused) {
+            if (animator != null) animator.paused = paused;
+        }
     }
 
     private static class BrushBatch {
@@ -57,7 +117,6 @@ public class DYNRenderer implements Disposable {
         Texture texture;
         Texture lightmap;
         boolean hasLightmap;
-        boolean isGlbMesh; // Tracks if mesh was provided by GLB model vs generated BSP mesh
     }
 
     public void addBrush(String key, BSPFile.Model bModel, BSPFile bsp) {
@@ -71,42 +130,63 @@ public class DYNRenderer implements Disposable {
     }
 
     public void addGlbModel(String key, Model glbModel) {
-        if (brushLibrary.containsKey(key)) return;
-
-        Array<BrushBatch> batches = new Array<>();
+        if (glbModels.containsKey(key)) return;
+        glbModels.put(key, glbModel);
         glbModelsToDispose.add(glbModel);
+        printAnimations(key);
+    }
 
-        for (Node node : glbModel.nodes) {
-            extractGlbBatches(node, batches);
+    /** Debug: prints every animation name available on a registered GLB model. */
+    public void printAnimations(String key) {
+        Model m = glbModels.get(key);
+        if (m == null) {
+            Gdx.app.log("DYNRenderer", "printAnimations: no GLB model with key '" + key + "'");
+            return;
         }
-
-        if (batches.size > 0) {
-            brushLibrary.put(key, batches);
+        if (m.animations.size == 0) {
+            Gdx.app.log("DYNRenderer", "GLB '" + key + "' has NO animations");
+            return;
+        }
+        Gdx.app.log("DYNRenderer", "GLB '" + key + "' animations (" + m.animations.size + "):");
+        for (int i = 0; i < m.animations.size; i++) {
+            com.badlogic.gdx.graphics.g3d.model.Animation a = m.animations.get(i);
+            Gdx.app.log("DYNRenderer", "  [" + i + "] \"" + a.id + "\"  (" + a.duration + "s)");
         }
     }
 
-    private void extractGlbBatches(Node node, Array<BrushBatch> batches) {
-        for (NodePart part : node.parts) {
-            BrushBatch batch = new BrushBatch();
-            batch.mesh = part.meshPart.mesh;
-            batch.isGlbMesh = true;
+    /**
+     * Creates a render instance with its own animation state and adds it to the scene.
+     * (Optional: instances you add to `instances` manually with just a meshKey
+     * are auto-resolved to a GLB ModelInstance on the next update/render.)
+     */
+    public RenderInstance createGlbInstance(String key) {
+        Model m = glbModels.get(key);
+        if (m == null) return null;
+        RenderInstance inst = new RenderInstance();
+        inst.meshKey = key;
+        attachGlb(inst, m);
+        instances.add(inst);
+        return inst;
+    }
 
-            if (part.material.has(TextureAttribute.Diffuse)) {
-                TextureAttribute texAttr = (TextureAttribute) part.material.get(TextureAttribute.Diffuse);
-                batch.texture = texAttr.textureDescription.texture;
-            } else {
-                batch.texture = getOrCreateCheckerTexture();
-            }
+    public void removeInstance(RenderInstance inst) {
+        instances.removeValue(inst, true);
+    }
 
-            batch.lightmap = getOrCreateWhiteLightmap();
-            batch.hasLightmap = false;
-
-            batches.add(batch);
+    private void attachGlb(RenderInstance inst, Model m) {
+        inst.modelInstance = new ModelInstance(m);
+        if (m.animations.size > 0) {
+            inst.animator = new AnimationController(inst.modelInstance);
         }
+        inst.resolved = true;
+    }
 
-        for (Node child : node.getChildren()) {
-            extractGlbBatches(child, batches);
-        }
+    /** Lazily binds a GLB ModelInstance to instances that were added manually. */
+    public void resolve(RenderInstance inst) {
+        if (inst.resolved) return;
+        inst.resolved = true;
+        Model m = glbModels.get(inst.meshKey);
+        if (m != null) attachGlb(inst, m);
     }
 
     public static Vector3 getModelCenter(BSPFile.Model bModel) {
@@ -176,7 +256,6 @@ public class DYNRenderer implements Disposable {
             batch.lightmap = (lmIdx >= 0 && lmIdx < lightmapTextures.length)
                     ? lightmapTextures[lmIdx] : getOrCreateWhiteLightmap();
             batch.hasLightmap = batch.lightmap != whiteLightmap;
-            batch.isGlbMesh = false;
             batches.add(batch);
         }
         return batches;
@@ -197,7 +276,7 @@ public class DYNRenderer implements Disposable {
         vList.add(u1);
         vList.add(v1);
     }
-    
+
     public void overrideTextureForMesh(String meshKey, Texture newTexture, boolean continueUseLightmap) {
         Array<BrushBatch> batches = brushLibrary.get(meshKey);
         if (batches != null) {
@@ -205,6 +284,9 @@ public class DYNRenderer implements Disposable {
                 batch.texture = newTexture;
                 batch.hasLightmap = continueUseLightmap;
             }
+        }
+        if (glbModels.containsKey(meshKey)) {
+            glbTextureOverrides.put(meshKey, newTexture);
         }
     }
 
@@ -283,39 +365,65 @@ public class DYNRenderer implements Disposable {
         return ((long)texIdx << 32) | (lmIdx & 0xFFFFFFFFL);
     }
 
+    public void update(float delta) {
+        for (int i = 0; i < instances.size; i++) {
+            RenderInstance inst = instances.get(i);
+            resolve(inst);
+            if (inst.modelInstance == null) continue;
+
+            if (inst.animator != null) inst.animator.update(delta);
+            // updates node.globalTransform AND skinning bone matrices
+            inst.modelInstance.calculateTransforms();
+        }
+    }
+
     public void render(Camera camera) {
         SHADER.bind();
-        
-        for (RenderInstance inst : instances) {
-            Array<BrushBatch> batches = brushLibrary.get(inst.meshKey);
-            if (batches == null) continue;
+
+        for (int i = 0; i < instances.size; i++) {
+            RenderInstance inst = instances.get(i);
+            resolve(inst);
+
+            boolean isGlb = inst.modelInstance != null;
+            Array<BrushBatch> batches = isGlb ? null : brushLibrary.get(inst.meshKey);
+            if (!isGlb && batches == null) continue;
 
             LightGridManager.sampleAt(inst.position.x, inst.position.y, inst.position.z, gridSample);
             gridSample.ambient.add(LightGridManager.ambient_offset); // make it a bit brighter on dark sections
-            
+
             SHADER.setLightGridData(gridSample.ambient, gridSample.directed, gridSample.lightDir);
-            
+
             inst.lightGridColor.set(gridSample.ambient);
             SHADER.setLightGridColor(inst.lightGridColor.x, inst.lightGridColor.y, inst.lightGridColor.z);
 
-            // reuse modelTransform matrix
+            // instance transform
             modelTransform.setToTranslation(inst.position);
             modelTransform.rotate(Vector3.Y, inst.rotation.y);
             modelTransform.rotate(Vector3.X, inst.rotation.x);
             modelTransform.rotate(Vector3.Z, inst.rotation.z);
 
-            // compute normal matrix for GLB model orientation
-            normalMatrix.set(modelTransform).inv().transpose();
+            if (isGlb) {
+                Texture override = glbTextureOverrides.get(inst.meshKey);
+                Array<Node> nodes = inst.modelInstance.nodes;
+                for (int n = 0; n < nodes.size; n++) {
+                    renderNode(nodes.get(n), camera, override);
+                }
+                continue;
+            }
 
-            // reuse combinedMatrix
+            // ---------------- BSP brush path ----------------
+            SHADER.setSkinned(false);
+
+            normalMatrix.set(modelTransform).inv().transpose();
             combinedMatrix.set(camera.combined).mul(modelTransform);
 
             SHADER.setMVP(combinedMatrix);
             SHADER.setModel(modelTransform);
             SHADER.setNormalMatrix(normalMatrix);
-            SHADER.setLightGridColor(inst.lightGridColor.x, inst.lightGridColor.y, inst.lightGridColor.z); // ambient
 
-            for (BrushBatch batch : batches) {
+            ShaderProgram prog = SHADER.getProgram();
+            for (int b = 0; b < batches.size; b++) {
+                BrushBatch batch = batches.get(b);
                 Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
                 batch.texture.bind();
 
@@ -324,21 +432,76 @@ public class DYNRenderer implements Disposable {
                 Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
 
                 SHADER.setHasLightmap(batch.hasLightmap ? 1f : 0f);
-                SHADER.setUseNormalShading(true); // Active Lambertian on both GLB and Brush meshes
+                SHADER.setUseNormalShading(true);
 
-                batch.mesh.render(SHADER.getProgram(), GL20.GL_TRIANGLES);
+                batch.mesh.render(prog, GL20.GL_TRIANGLES);
             }
         }
+        SHADER.setSkinned(false);
         SHADER.setUseNormalShading(false);
     }
-    
+
+    private void renderNode(Node node, Camera camera, Texture textureOverride) {
+        ShaderProgram prog = SHADER.getProgram();
+
+        for (int p = 0; p < node.parts.size; p++) {
+            NodePart part = node.parts.get(p);
+            if (!part.enabled) continue;
+
+            boolean skinned = part.bones != null && part.bones.length > 0;
+
+            if (skinned) {
+                // Bone matrices already contain the node/bone hierarchy transforms
+                // (model space), so only the instance transform is applied on top.
+                partTransform.set(modelTransform);
+                SHADER.setBones(part.bones);
+            } else {
+                // Rigid part: apply its animated node transform
+                partTransform.set(modelTransform).mul(node.globalTransform);
+            }
+            SHADER.setSkinned(skinned);
+
+            partNormal.set(partTransform).inv().transpose();
+            partMVP.set(camera.combined).mul(partTransform);
+
+            SHADER.setMVP(partMVP);
+            SHADER.setModel(partTransform);
+            SHADER.setNormalMatrix(partNormal);
+
+            Texture tex = textureOverride;
+            if (tex == null) {
+                if (part.material.has(TextureAttribute.Diffuse)) {
+                    TextureAttribute ta = (TextureAttribute) part.material.get(TextureAttribute.Diffuse);
+                    tex = ta.textureDescription.texture;
+                } else {
+                    tex = getOrCreateCheckerTexture();
+                }
+            }
+
+            Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
+            tex.bind();
+            Gdx.gl.glActiveTexture(GL20.GL_TEXTURE1);
+            getOrCreateWhiteLightmap().bind();
+            Gdx.gl.glActiveTexture(GL20.GL_TEXTURE0);
+
+            SHADER.setHasLightmap(0f);
+            SHADER.setUseNormalShading(true);
+
+            // Use the part's offset/size: GLB meshes often pack several parts in one buffer
+            part.meshPart.mesh.render(prog, part.meshPart.primitiveType,
+                    part.meshPart.offset, part.meshPart.size);
+        }
+
+        for (int c = 0; c < node.getChildCount(); c++) {
+            renderNode(node.getChild(c), camera, textureOverride);
+        }
+    }
+
     @Override
     public void dispose() {
         for (Array<BrushBatch> batches : brushLibrary.values()) {
             for (BrushBatch batch : batches) {
-                if (batch.mesh != null && !batch.isGlbMesh) {
-                    batch.mesh.dispose();
-                }
+                if (batch.mesh != null) batch.mesh.dispose();
             }
         }
         for (Texture t : textureLibrary.values()) t.dispose();
@@ -354,6 +517,9 @@ public class DYNRenderer implements Disposable {
         glbModelsToDispose.clear();
 
         brushLibrary.clear();
+        glbModels.clear();
+        glbTextureOverrides.clear();
         textureLibrary.clear();
+        instances.clear();
     }
 }

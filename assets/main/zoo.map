@@ -756,6 +756,13 @@
 }
 // entity 22
 {
+"classname" "info_enemy_start"
+"origin" "256 32 32"
+"uid" "enemy"
+"model" "models/Test.glb"
+}
+// entity 23
+{
 "classname" "func_group"
 "_tb_type" "_tb_layer"
 "_tb_name" "trans33"
@@ -817,7 +824,7 @@
 ( 5632 -2864 -3056 ) ( 5632 -2864 -3040 ) ( 5632 3040 -3056 ) sky/sky 0 0 0 1 1 0 1 0
 }
 }
-// entity 23
+// entity 24
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"
@@ -825,20 +832,20 @@
 "_tb_id" "12"
 "_tb_layer_sort_index" "1"
 }
-// entity 24
+// entity 25
 {
 "classname" "debug"
 "origin" "-8 -8 376"
 "console" "1"
 "_tb_layer" "12"
 }
-// entity 25
+// entity 26
 {
 "classname" "info_player_start"
 "origin" "0 0 32"
 "_tb_layer" "12"
 }
-// entity 26
+// entity 27
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"
@@ -846,7 +853,7 @@
 "_tb_id" "13"
 "_tb_layer_sort_index" "2"
 }
-// entity 27
+// entity 28
 {
 "classname" "trigger_ent"
 "targetname" "ladder_a"
@@ -861,7 +868,7 @@
 ( -208 128 16 ) ( -208 128 17 ) ( -208 129 16 ) common/trigger 0 0 0 1 1 0 0 0
 }
 }
-// entity 28
+// entity 29
 {
 "classname" "trigger_ent"
 "targetname" "ladder_b"
@@ -877,7 +884,7 @@
 ( -352 -48 16 ) ( -352 -48 17 ) ( -352 -47 16 ) common/trigger 0 0 0 1 1
 }
 }
-// entity 29
+// entity 30
 {
 "classname" "trigger_ent"
 "initiator" "projectile"
@@ -894,7 +901,7 @@
 ( -368 -48 336 ) ( -368 -48 337 ) ( -368 -47 336 ) common/trigger 0 0 0 1 1
 }
 }
-// entity 30
+// entity 31
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"

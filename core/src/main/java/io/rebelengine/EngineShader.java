@@ -20,6 +20,9 @@ public class EngineShader implements Disposable {
     public static final int LIGHT_POINT = 0;
     public static final int LIGHT_SPOT  = 1;
 
+    // --- Skinning Constants (must match MAX_BONES in rbl.vs) ---
+    public static final int MAX_BONES = 64;
+
     // --- Core Shader ---
     private final ShaderProgram program;
 
@@ -32,6 +35,11 @@ public class EngineShader implements Disposable {
     private final int[]   lightTypes     = new int[MAX_LIGHTS];
     private final float[] lightIntensities = new float[MAX_LIGHTS];
     private int numLights = 0;
+
+    // --- Skinning ---
+    private final float[] boneBuffer = new float[MAX_BONES * 16];
+    private boolean skinnedState = false; // cached to avoid redundant uniform uploads
+    private boolean warnedBoneLimit = false;
 
     // --- Fog Fields ---
     private final Color fogColor = new Color(0.1f, 0.1f, 0.1f, 0.4f);
@@ -51,10 +59,14 @@ public class EngineShader implements Disposable {
             throw new GdxRuntimeException("EngineShader compile error:\n" + program.getLog());
         }
     }
-   
+
     public void bind() {
         program.bind();
         program.setUniformf("u_useNormalShading", 0.0f);
+
+        // Skinning off by default
+        skinnedState = false;
+        program.setUniformf("u_skinned", 0.0f);
 
         // Samplers
         program.setUniformi("u_base", 0);
@@ -109,6 +121,31 @@ public class EngineShader implements Disposable {
         program.setUniformf("u_lightGridColor", r, g, b);
     }
 
+    // --- Skinning Setters ---
+
+    /** Enables/disables bone skinning in the vertex shader. Cached, so cheap to call often. */
+    public void setSkinned(boolean skinned) {
+        if (skinned == skinnedState) return;
+        skinnedState = skinned;
+        program.setUniformf("u_skinned", skinned ? 1.0f : 0.0f);
+    }
+
+    /** Uploads bone matrices (from NodePart.bones) to u_bones. Extra bones beyond MAX_BONES are ignored. */
+    public void setBones(Matrix4[] bones) {
+        int count = Math.min(bones.length, MAX_BONES);
+        if (bones.length > MAX_BONES && !warnedBoneLimit) {
+            warnedBoneLimit = true;
+            Gdx.app.error("EngineShader", "Model has " + bones.length + " bones, limit is "
+                    + MAX_BONES + ". Extra bones ignored (raise MAX_BONES here AND in rbl.vs).");
+        }
+        for (int i = 0; i < count; i++) {
+            if (bones[i] != null) {
+                System.arraycopy(bones[i].val, 0, boneBuffer, i * 16, 16);
+            }
+        }
+        program.setUniformMatrix4fv("u_bones", boneBuffer, 0, count * 16);
+    }
+
     // --- Fog Setters ---
 
     public void setFog(Color color, float start, float end) {
@@ -120,12 +157,12 @@ public class EngineShader implements Disposable {
     public void setFogEnabled(boolean enabled) {
         this.fogEnabled = enabled;
     }
-    
+
     // --- Light Management ---
     public void clearLights() {
         this.numLights = 0;
     }
-    
+
     public void setLightGridData(Vector3 ambient, Vector3 directed, Vector3 lightDir) {
         program.setUniformf("u_gridAmbient", ambient);
         program.setUniformf("u_gridDirected", directed);
@@ -191,7 +228,7 @@ public class EngineShader implements Disposable {
 
         numLights++;
     }
-    
+
     // --- Getters & Disposal ---
 
     public ShaderProgram getProgram() {
