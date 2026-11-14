@@ -1017,42 +1017,42 @@ default
 168 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 23
+	entity 26
 	sampleSize 0
 }
 
 169 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 23
+	entity 26
 	sampleSize 0
 }
 
 170 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 23
+	entity 26
 	sampleSize 0
 }
 
 171 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 23
+	entity 26
 	sampleSize 0
 }
 
 172 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 23
+	entity 26
 	sampleSize 0
 }
 
 173 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/sky/sky
-	entity 23
+	entity 26
 	sampleSize 0
 }
 
@@ -1221,7 +1221,7 @@ default
 197 // SURFACE_META V: 64 I: 186 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -1229,7 +1229,7 @@ default
 198 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -1237,7 +1237,7 @@ default
 199 // SURFACE_META V: 64 I: 186 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( -1.000000 0.000000 0.000000 )
 }
@@ -1245,7 +1245,7 @@ default
 200 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1253,7 +1253,7 @@ default
 201 // SURFACE_META V: 40 I: 114 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 -1.000000 0.000000 )
 }
@@ -1261,7 +1261,7 @@ default
 202 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1269,7 +1269,7 @@ default
 203 // SURFACE_META V: 40 I: 114 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -1277,7 +1277,7 @@ default
 204 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1285,7 +1285,7 @@ default
 205 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1293,7 +1293,7 @@ default
 206 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1301,7 +1301,7 @@ default
 207 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1309,7 +1309,7 @@ default
 208 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1317,7 +1317,7 @@ default
 209 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1325,7 +1325,7 @@ default
 210 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1333,7 +1333,7 @@ default
 211 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1341,7 +1341,7 @@ default
 212 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1349,7 +1349,7 @@ default
 213 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1357,7 +1357,7 @@ default
 214 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1365,7 +1365,7 @@ default
 215 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1373,7 +1373,7 @@ default
 216 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1381,7 +1381,7 @@ default
 217 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1389,7 +1389,7 @@ default
 218 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1397,7 +1397,7 @@ default
 219 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1405,7 +1405,7 @@ default
 220 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1413,7 +1413,7 @@ default
 221 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
@@ -1421,7 +1421,7 @@ default
 222 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -1429,7 +1429,7 @@ default
 223 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 -1.000000 0.000000 )
 }
@@ -1437,15 +1437,15 @@ default
 224 // SURFACE_META V: 4 I: 6 planar
 {
 	shader textures/common/metal
-	entity 15
+	entity 14
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 -1.000000 )
 }
 
 225 // SURFACE_META V: 4 I: 6 planar
 {
-	shader textures/common/glass
-	entity 20
+	shader textures/common/metal
+	entity 19
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }

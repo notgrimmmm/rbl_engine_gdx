@@ -24,24 +24,30 @@ public class BasePlayer {
 
     private final Entity entity;
     private final PerspectiveCamera camera;
+    
+    public TransformComponent transform;
+    public InputControlComponent input;
+    public MouseLookComponent mouseLook;
+    public PhysicsBodyComponent physics;
+    public CameraComponent cameraComponent;
 
     public BasePlayer(Vector3 spawnPosition) {
         entity = new Entity();
         entity.flags = EntityFlags.PLAYER | EntityFlags.INITIATOR; // initiator is the one that triggers 
 
-        TransformComponent transform = new TransformComponent();
+        this.transform = new TransformComponent();
         transform.previousPosition.set(spawnPosition);
         transform.currentPosition.set(spawnPosition);
         transform.renderPosition.set(spawnPosition);
 
-        InputControlComponent input = new InputControlComponent();
+        this.input = new InputControlComponent();
         input.inputBehavior = new Input_PlayerMoveBehavior();
         input.locomotionBehavior = new Locomotion_PlayerMove();
         input.priority = 100;
         
-        MouseLookComponent mouseLook = new MouseLookComponent();
+        this.mouseLook = new MouseLookComponent();
 
-        PhysicsBodyComponent physics = new PhysicsBodyComponent();
+        this.physics = new PhysicsBodyComponent();
         physics.minsStand.set(-RADIUS, -HEIGHT_STAND / 2f, -RADIUS);
         physics.maxsStand.set(RADIUS, HEIGHT_STAND / 2f, RADIUS);
         physics.minsCrouch.set(-RADIUS, -HEIGHT_CROUCH / 2f, -RADIUS);
@@ -55,7 +61,7 @@ public class BasePlayer {
         camera.near = 3f;
         camera.far = 4096f;
 
-        CameraComponent cameraComponent = new CameraComponent();
+        this.cameraComponent = new CameraComponent();
         cameraComponent.camera = camera;
 
         entity.add(transform);

@@ -50,6 +50,7 @@ import io.rebelengine.Commands.StatsCommand;
 import io.rebelengine.Commands.NoClipCommand;
 import io.rebelengine.Components.CameraComponent;
 import io.rebelengine.Components.EntityScript;
+import io.rebelengine.Components.InstanceComponent;
 import io.rebelengine.Components.ScriptComponent;
 import io.rebelengine.Helpers.Utils_Effeks;
 import io.rebelengine.Systems.ScriptingSystem;
@@ -231,6 +232,28 @@ public class RebelEngineBase implements Disposable{
             ScriptComponent sc = new ScriptComponent()
                     .add(new Player_InitiatorTriggeringScript(player_base.getEntity()))
                     .add(new Player_PropsInteractionScript(player_base.getEntity()));
+            
+            if (playerEnt.get("model") != null){
+                String modelString = playerEnt.get("model");
+                SceneAsset asset = new GLBLoader().load(Gdx.files.internal("main/baseq3/" + modelString));
+                Model glbModel = asset.scene.model;
+                
+                DYNRenderer.RenderInstance instance = Utils_Misc.createGlbRenderInstance(modelString, glbModel, ppos, Vector3.Zero, DYN_RENDERER);
+                
+                InstanceComponent instanceComp = new InstanceComponent();
+                instanceComp.instance = instance;
+                instanceComp.bspModelIndex = instance.bmIndex;
+                
+                player_base.physics.bspModelIndexReference = instance.bmIndex;
+                player_base.getEntity().add(instanceComp);
+                DYN_RENDERER.instances.add(instance);
+                DYN_RENDERER.resolve(instance); // for animations
+            }
+            
+            if (playerEnt.get("_moveSpeed") != null){
+                float s = Float.parseFloat(playerEnt.get("_moveSpeed"));
+                player_base.physics.moveSpeed = s;
+            }
 
             player_base.getEntity().add(sc);
             ASHLEY.addEntity(player_base.getEntity());

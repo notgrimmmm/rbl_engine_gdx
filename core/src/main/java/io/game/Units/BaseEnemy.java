@@ -48,7 +48,7 @@ public class BaseEnemy extends Entity{
         model.calculateBoundingBox(bounds);
         
         float halfX = 16;
-        float halfY = 48;
+        float halfY = 32;
         float halfZ = 16;
 
         body.minsStand.set(-halfX , -halfY, -halfZ);
