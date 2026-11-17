@@ -376,10 +376,10 @@ public class DYNRenderer implements Disposable {
             inst.modelInstance.calculateTransforms();
         }
     }
-
+    
     public void render(Camera camera) {
         SHADER.bind();
-
+        
         for (int i = 0; i < instances.size; i++) {
             RenderInstance inst = instances.get(i);
             resolve(inst);
@@ -389,7 +389,7 @@ public class DYNRenderer implements Disposable {
             if (!isGlb && batches == null) continue;
 
             LightGridManager.sampleAt(inst.position.x, inst.position.y, inst.position.z, gridSample);
-            gridSample.ambient.add(LightGridManager.ambient_offset); // make it a bit brighter on dark sections
+            //gridSample.ambient.add(LightGridManager.ambient_offset); // make it a bit brighter on dark sections
 
             SHADER.setLightGridData(gridSample.ambient, gridSample.directed, gridSample.lightDir);
 

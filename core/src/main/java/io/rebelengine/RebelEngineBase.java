@@ -600,6 +600,8 @@ public class RebelEngineBase implements Disposable{
                             break; // return out of the component loop safely
                         }
                     }
+                    
+                    if (scriptor.get("parameters") != null) script.setParameters(scriptor.get("parameters"));
 
                     EngineContext.get().add_script(group, script); // add to game context for look up
                     System.out.println("Instantiated script file : " + script);
@@ -613,12 +615,12 @@ public class RebelEngineBase implements Disposable{
             }
         }
     }
-
+    
     public void render(float delta){
         if (BSP_RENDERER == null || camera == null) return;
 
         debuggingConsole.update(delta);
-
+        
         // Input focus is the single source of truth. Locking it globally
         // silences the player, the mouse-look, and any future system that
         // consults InputFocus.is(...). Console-open and noclip both lock.
@@ -644,7 +646,7 @@ public class RebelEngineBase implements Disposable{
         EngineContext.get().AUDIO().setListenerDirection(camera.direction.x, camera.direction.y, camera.direction.z);
         // set listener worl up ? also should i set the listener index 0 ?
         
-        BSP_RENDERER.render(camera, q3x, q3y, q3z);
+        BSP_RENDERER.render(camera, q3x, q3y, q3z);     
         DYN_RENDERER.update(delta); //for animations
         DYN_RENDERER.render(camera); //already contains instances added
         UI_RENDERER.render(camera); //idk if we want this here ? maybe put it outside engine ?

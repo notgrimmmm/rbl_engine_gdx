@@ -1,5 +1,6 @@
-// Game: RebelEdit
-// Format: Quake3
+// Game: Rebel_Engine_Game
+// Format: Quake3 (legacy)
+// Generator: TrenchBroom 2026.2 (Build v2026.2 Release Win64)
 // entity 0
 {
 "classname" "worldspawn"
@@ -754,6 +755,7 @@
 {
 "classname" "info_player_start"
 "origin" "0 0 32"
+"model" "models/player.glb"
 }
 // entity 23
 {
@@ -801,6 +803,12 @@
 }
 }
 // entity 26
+{
+"classname" "info_enemy_start"
+"origin" "224 32 32"
+"model" "models/player.glb"
+}
+// entity 27
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"
@@ -863,7 +871,7 @@
 ( 5632 -2864 -3056 ) ( 5632 -2864 -3040 ) ( 5632 3040 -3056 ) sky/sky 0 0 0 1 1 0 1 0
 }
 }
-// entity 27
+// entity 28
 {
 "classname" "func_group"
 "_tb_type" "_tb_layer"

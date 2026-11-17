@@ -15,4 +15,6 @@ public interface EntityScript {
     void update_fixed(float fixedDt);
     void execute(Object parameter);
     void execute_off();
+    
+    default void setParameters(String params) {}
 }
